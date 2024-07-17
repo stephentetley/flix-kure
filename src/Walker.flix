@@ -26,9 +26,15 @@ mod FlixKure.Walker {
 
         pub type Eff: Eff
 
-        pub def allR(x: a): Rewrite[Walker.Context[a], a, Walker.Eff[a] + Exn] -> Rewrite[Walker.Context[a], a, Walker.Eff[a] + Exn]
+        pub def allR(w: Rewrite[Walker.Context[a], a, Walker.Eff[a] + Exn]): Rewrite[Walker.Context[a], a, Walker.Eff[a] + Exn]
 
-        pub def allT(x: a): Transform[Walker.Context[a], a, b, Walker.Eff[a] + Exn] -> Transform[Walker.Context[a], a, b, Walker.Eff[a] + Exn] with Monoid[b] where Walker.Out[a] ~ b
+        pub def allT(w: Transform[Walker.Context[a], a, b, Walker.Eff[a] + Exn]): Transform[Walker.Context[a], a, b, Walker.Eff[a] + Exn] with Monoid[b] where Walker.Out[a] ~ b
+
+        pub def oneT(w: Transform[Walker.Context[a], a, b, Walker.Eff[a] + Exn]): Transform[Walker.Context[a], a, b, Walker.Eff[a] + Exn] where Walker.Out[a] ~ b
+
+        pub def anyR(w: Rewrite[Walker.Context[a], a, Walker.Eff[a] + Exn]): Rewrite[Walker.Context[a], a, Walker.Eff[a] + Exn]
+
+        pub def oneR(w: Rewrite[Walker.Context[a], a, Walker.Eff[a] + Exn]): Rewrite[Walker.Context[a], a, Walker.Eff[a] + Exn]
 
     }
 
