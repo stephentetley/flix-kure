@@ -21,7 +21,7 @@ mod TestExn {
 
     @test
     def exn01(): Bool \ {} = 
-        exnHandler(_ -> { do FlixKure.Exception.Exn.throws("Bad"); ()}) == Err("Bad")
+        exnHandler(_ -> { FlixKure.Exception.Exn.throws("Bad"); ()}) == Err("Bad")
 
     @test
     def exn02(): Bool \ {} = 

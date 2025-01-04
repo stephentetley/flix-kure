@@ -17,21 +17,21 @@
 mod FlixKure.Exception {
 
     pub eff Exn {
-        pub def throws(x: String): Void
+        def throws(x: String): Void
     }
 
 
     ///
     ///
     pub def catchExn(f: Unit -> a \ ef + Exn, handler: String -> a): a \ ef = 
-        try f() with Exn {
+        run f() with Exn {
             def throws(s, _) = checked_ecast(handler(s))
         }
 
     ///
     ///
     pub def exnHandler(f: Unit -> a \ ef + Exn): Result[String, a] \ ef = 
-        try { 
+        run { 
             let x = f();
             Ok(x) 
         } with Exn {
