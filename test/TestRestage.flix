@@ -1,3 +1,4 @@
+   use TestRestage.RewriteResult
 /*
  * Copyright 2025 Stephen Tetley
  *
@@ -68,6 +69,52 @@ mod TestRestage {
         }
 
 
+    type alias Strategy[p] = p -> RewriteResult[p]
+
+    pub enum RewriteResult[p] {
+        case Success(p)
+        case Failure(Strategy[p])
+    }
+
+    pub def isSuccess(x: RewriteResult[p]): Bool = match x {
+        case RewriteResult.Success(_) => true
+        case RewriteResult.Failure(_) => false
+    }
+
+    pub def getS(x: RewriteResult[p]): p = match x {
+        case RewriteResult.Success(p) => p
+        case RewriteResult.Failure(_) => bug!("to elim...")
+    }
+
+
+    pub def all(s: Strategy[t]): Strategy[t] with Restage[t] = e ->
+        let (cs, fact) = restage(e);
+        let csn = List.map(s, cs);
+        if (List.forAll(isSuccess, csn)) {
+            let ans = fact(List.map(getS, csn));
+            RewriteResult.Success(ans)
+        } else {
+            RewriteResult.Failure(s)
+        }
+
+    pub def one(s: Strategy[t]): Strategy[t] with Restage[t] = e ->
+        let (cs, fact) = restage(e);
+        let cs1 = List.zipWithIndex(cs);
+        let ans = List.foldLeft((state, ei) ->
+            let (cont, _) = state;
+            let (idx, exp) = ei;
+            if (cont) { 
+                match s(exp) {
+                    case RewriteResult.Success(nexp)    => {
+                        let csn = List.zipWithIndex(cs) |> List.map(x -> if (fst(x) == idx) nexp else snd(x));                        
+                        (false, RewriteResult.Success(fact(csn)))
+                    }
+                    case f                              => (true, f)
+                }
+            } else state,
+            (true, RewriteResult.Failure(s)), 
+            cs1);
+        snd(ans)
 
     @test
     pub def test01(): Bool = 
