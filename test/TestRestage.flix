@@ -87,6 +87,26 @@ mod TestRestage {
     }
 
 
+
+    pub def seq(p: Strategy[t], q: Strategy[t]): Strategy[t] with Restage[t] = e -> match p(e) {
+        case RewriteResult.Success(_)   => q(e)
+        case fk                         => fk
+    }
+
+
+    pub def alt(p: Strategy[t], q: Strategy[t]): Strategy[t] with Restage[t] = e -> match p(e) {
+        case RewriteResult.Failure(_)   => q(e)
+        case sk                         => sk
+    }
+
+    pub def id(): Strategy[t] with Restage[t] = e -> RewriteResult.Success(e)
+
+    // aka `try`
+    pub def attempt(s: Strategy[t]): Strategy[t] with Restage[t] = alt(s, id())
+
+    pub def repeat(s: Strategy[t]): Strategy[t] with Restage[t] = 
+        attempt(seq(s, repeat(s)))
+
     pub def all(s: Strategy[t]): Strategy[t] with Restage[t] = e ->
         let (cs, fact) = restage(e);
         let csn = List.map(s, cs);
