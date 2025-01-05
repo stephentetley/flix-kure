@@ -17,7 +17,9 @@
 
 mod TestRestage {
 
-    use FlixKure.Restage
+    use RestageLib.Base.Restage
+    use RestageLib.Base.{Transform, Rewrite, TransformResult}
+    use RestageLib.Base.{restage}
 
     pub enum Exp with Eq, Order, ToString {
         case Build(Exp, String, Exp)
@@ -46,10 +48,6 @@ mod TestRestage {
         }
     }
 
-    pub def restage(e: t): (List[t], List[t] -> t) with Restage[t] = 
-        let cs = Restage.children(e);
-        let fact = Restage.factory(e);
-        (cs, fact)
 
     // TODO cps transform...
     pub def buRestage(f: t -> Option[t] \ ef, e: t): t \ ef with Restage[t] = match restage(e) {
@@ -69,103 +67,6 @@ mod TestRestage {
         }
 
 
-    type alias Rewrite[p] = Transform[p, p]
-    type alias Transform[a, b] = a -> TransformResult[a, b]
-
-    pub enum TransformResult[a, b] {
-        case Success(b)
-        case Failure(Transform[a, b])
-    }
-
-    pub def isSuccess(x: TransformResult[a, b]): Bool = match x {
-        case TransformResult.Success(_) => true
-        case TransformResult.Failure(_) => false
-    }
-
-    pub def getS(x: TransformResult[a, b]): b = match x {
-        case TransformResult.Success(p) => p
-        case TransformResult.Failure(_) => bug!("to elim...")
-    }
-
-
-
-    pub def seqR(p: Rewrite[t], q: Rewrite[t]): Rewrite[t] with Restage[t] = e -> match p(e) {
-        case TransformResult.Success(_)   => q(e)
-        case fk                         => fk
-    }
-
-
-    pub def alt(p: Rewrite[t], q: Rewrite[t]): Rewrite[t] with Restage[t] = e -> match p(e) {
-        case TransformResult.Failure(_)   => q(e)
-        case sk                         => sk
-    }
-
-    pub def idR(): Rewrite[t] with Restage[t] = e -> TransformResult.Success(e)
-
-    // aka `try`
-    pub def attemptR(s: Rewrite[t]): Rewrite[t] with Restage[t] = alt(s, idR())
-
-    pub def repeatR(s: Rewrite[t]): Rewrite[t] with Restage[t] = 
-        attemptR(seqR(s, repeatR(s)))
-
-    pub def allR(s: Rewrite[t]): Rewrite[t] with Restage[t] = e ->
-        let (cs, fact) = restage(e);
-        let csn = List.map(s, cs);
-        if (List.forAll(isSuccess, csn)) {
-            let ans = fact(List.map(getS, csn));
-            TransformResult.Success(ans)
-        } else {
-            TransformResult.Failure(s)
-        }
-
-    
-    pub def allT(s: Transform[s, t]): Transform[s, t] with Restage[s], Monoid[t] = e ->
-        let cs = Restage.children(e);
-        let csn = List.map(s, cs);
-        if (List.forAll(isSuccess, csn)) {
-            let ans = Monoid.fold(List.map(getS, csn));
-            TransformResult.Success(ans)
-        } else {
-            TransformResult.Failure(s)
-        }
-
-    pub def oneR(s: Rewrite[t]): Rewrite[t] with Restage[t] = e ->
-        let (cs, fact) = restage(e);
-        let cs1 = List.zipWithIndex(cs);
-        let ans = List.foldLeft((state, ei) ->
-            let (cont, _) = state;
-            let (idx, exp) = ei;
-            if (cont) { 
-                match s(exp) {
-                    case TransformResult.Success(nexp)    => {
-                        let csn = List.zipWithIndex(cs) |> List.map(x -> if (fst(x) == idx) nexp else snd(x));
-                        (false, TransformResult.Success(fact(csn)))
-                    }
-                    case f                              => (true, f)
-                }
-            } else state,
-            (true, TransformResult.Failure(s)), 
-            cs1);
-        snd(ans)
-
-    
-    pub def oneT(s: Transform[s, t]): Transform[s, t] with Restage[s] = e ->
-        let cs = Restage.children(e);
-        let cs1 = List.zipWithIndex(cs);
-        let ans = List.foldLeft((state, ei) ->
-            let (cont, _) = state;
-            let (_, exp) = ei;
-            if (cont) { 
-                match s(exp) {
-                    case TransformResult.Success(nexp)  => {
-                        (false, TransformResult.Success(nexp))
-                    }
-                    case f                              => (true, f)
-                }
-            } else state,
-            (true, TransformResult.Failure(s)), 
-            cs1);
-        snd(ans)
 
     @test
     pub def test01(): Bool = 
