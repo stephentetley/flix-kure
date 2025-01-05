@@ -22,22 +22,27 @@ mod RestageLib.Base {
     }
 
     pub type alias Rewrite[ef: Eff, cx: Type, p: Type] = Transform[ef, cx, p, p]
-    pub type alias Transform[ef: Eff, cx: Type, a: Type, b: Type] = (cx, a) -> TransformResult[ef, cx, a, b] \ ef
-
-    pub enum TransformResult[ef: Eff, cx: Type, a: Type, b: Type] {
-        case Success(b)
-        case Failure(Transform[ef, cx, a, b])
+    pub enum Transform[ef: Eff, cx: Type, a: Type, b: Type] { 
+        case Transform((cx, a) -> TransformResult[b] \ ef)
     }
 
+    pub enum TransformResult[a] {
+        case Success(a)
+        case Failure
+    }
+
+    pub def applyT(t: Transform[ef, cx, a, b], cx: cx, a: a): TransformResult[b] \ ef =
+        let Transform.Transform(f) = t;
+        f(cx, a)
 
     pub def restage(e: t): (List[t], List[t] -> t) with Restage[t] = 
         let cs = Restage.children(e);
         let fact = Restage.factory(e);
         (cs, fact)
 
-    pub def isSuccess(x: TransformResult[ef, cx, a, b]): Bool = match x {
+    pub def isSuccess(x: TransformResult[a]): Bool = match x {
         case TransformResult.Success(_) => true
-        case TransformResult.Failure(_) => false
+        case TransformResult.Failure    => false
     }
 
     // This is partial so we don't want to reintroduce it if we can avoid it...
@@ -47,11 +52,11 @@ mod RestageLib.Base {
     // }
 
 
-    pub def allSuccesses(xs: List[TransformResult[ef, cx, a, b]]): Option[List[b]] = 
-        def loop(ll, fk: Unit -> Option[List[b]], sk: List[b] -> Option[List[b]]) = match ll {
+    pub def allSuccesses(xs: List[TransformResult[a]]): Option[List[a]] = 
+        def loop(ll, fk, sk) = match ll {
             case Nil                                => sk(Nil)
             case TransformResult.Success(p) :: rs   => loop(rs, fk, ks -> sk(p :: ks))
-            case TransformResult.Failure(_) :: _    => fk()
+            case TransformResult.Failure :: _       => fk()
         };
         loop(xs, _ -> None, ks -> Some(ks))
 
