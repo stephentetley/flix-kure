@@ -21,12 +21,12 @@ mod RestageLib.Base {
         pub def factory(e: t, cs: List[t]): t
     }
 
-    pub type alias Rewrite[p] = Transform[p, p]
-    pub type alias Transform[a, b] = a -> TransformResult[a, b]
+    pub type alias Rewrite[ef: Eff, p: Type] = Transform[ef, p, p]
+    pub type alias Transform[ef: Eff, a: Type, b: Type] = a -> TransformResult[ef, a, b] \ ef
 
-    pub enum TransformResult[a, b] {
+    pub enum TransformResult[ef: Eff, a: Type, b: Type] {
         case Success(b)
-        case Failure(Transform[a, b])
+        case Failure(Transform[ef, a, b])
     }
 
 
@@ -34,13 +34,13 @@ mod RestageLib.Base {
         let cs = Restage.children(e);
         let fact = Restage.factory(e);
         (cs, fact)
-        
-    pub def isSuccess(x: TransformResult[a, b]): Bool = match x {
+
+    pub def isSuccess(x: TransformResult[ef, a, b]): Bool = match x {
         case TransformResult.Success(_) => true
         case TransformResult.Failure(_) => false
     }
 
-    pub def getSuccess(x: TransformResult[a, b]): b = match x {
+    pub def getSuccess(x: TransformResult[ef, a, b]): b = match x {
         case TransformResult.Success(p) => p
         case TransformResult.Failure(_) => bug!("to elim...")
     }
