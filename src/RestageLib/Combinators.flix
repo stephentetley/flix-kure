@@ -43,22 +43,18 @@ mod RestageLib.Combinators {
     pub def allR(s: Rewrite[ef, ctx, t]): Rewrite[ef, ctx, t] with Restage[t] = (cx, e) ->
         let (cs, fact) = RestageLib.Base.restage(e);
         let csn = List.map(x -> s(cx, x), cs);
-        if (List.forAll(RestageLib.Base.isSuccess, csn)) {
-            let ans = fact(List.map(RestageLib.Base.getSuccess, csn));
-            TransformResult.Success(ans)
-        } else {
-            TransformResult.Failure(s)
+        match RestageLib.Base.allSuccesses(csn) {
+            case Some(xs) => TransformResult.Success(fact(xs))
+            case None     => TransformResult.Failure(s) 
         }
 
     
     pub def allT(s: Transform[ef, cx, s, t]): Transform[ef, cx, s, t] with Restage[s], Monoid[t] = (cx, e) ->
         let cs = Restage.children(e);
         let csn = List.map(x -> s(cx, x), cs);
-        if (List.forAll(RestageLib.Base.isSuccess, csn)) {
-            let ans = Monoid.fold(List.map(RestageLib.Base.getSuccess, csn));
-            TransformResult.Success(ans)
-        } else {
-            TransformResult.Failure(s)
+        match RestageLib.Base.allSuccesses(csn) {
+            case Some(xs) => TransformResult.Success(Monoid.fold(xs))
+            case None     => TransformResult.Failure(s) 
         }
 
     pub def oneR(s: Rewrite[ef, cx, t]): Rewrite[ef, cx, t] with Restage[t] = (cx, e) ->

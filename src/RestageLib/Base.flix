@@ -40,11 +40,20 @@ mod RestageLib.Base {
         case TransformResult.Failure(_) => false
     }
 
-    pub def getSuccess(x: TransformResult[ef, cx, a, b]): b = match x {
-        case TransformResult.Success(p) => p
-        case TransformResult.Failure(_) => bug!("to elim...")
-    }
+    // This is partial so we don't want to reintroduce it if we can avoid it...
+    // pub def getSuccess(x: TransformResult[ef, cx, a, b]): b = match x {
+    //     case TransformResult.Success(p) => p
+    //     case TransformResult.Failure(_) => bug!("to elim...")
+    // }
 
+
+    pub def allSuccesses(xs: List[TransformResult[ef, cx, a, b]]): Option[List[b]] = 
+        def loop(ll, fk: Unit -> Option[List[b]], sk: List[b] -> Option[List[b]]) = match ll {
+            case Nil                                => sk(Nil)
+            case TransformResult.Success(p) :: rs   => loop(rs, fk, ks -> sk(p :: ks))
+            case TransformResult.Failure(_) :: _    => fk()
+        };
+        loop(xs, _ -> None, ks -> Some(ks))
 
 }
 
