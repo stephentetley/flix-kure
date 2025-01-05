@@ -20,29 +20,29 @@ mod RestageLib.Combinators {
     use RestageLib.Base.Restage
     use RestageLib.Base.{Transform, Rewrite, TransformResult}
 
-    pub def idR(): Rewrite[ef, t] with Restage[t] = e -> checked_ecast(TransformResult.Success(e))
+    pub def idR(): Rewrite[ef, cx, t] with Restage[t] = (_, e) -> checked_ecast(TransformResult.Success(e))
 
-    pub def seqR(p: Rewrite[ef, t], q: Rewrite[ef, t]): Rewrite[ef, t] with Restage[t] = e -> match p(e) {
-        case TransformResult.Success(_) => q(e)
+    pub def seqR(p: Rewrite[ef, cx, t], q: Rewrite[ef, cx, t]): Rewrite[ef, cx, t] with Restage[t] = (cx, e) -> match p(cx, e) {
+        case TransformResult.Success(_) => q(cx, e)
         case fk                         => fk
     }
 
 
-    pub def altR(p: Rewrite[ef, t], q: Rewrite[ef, t]): Rewrite[ef, t] with Restage[t] = e -> match p(e) {
-        case TransformResult.Failure(_)   => q(e)
+    pub def altR(p: Rewrite[ef, cx, t], q: Rewrite[ef, cx, t]): Rewrite[ef, cx, t] with Restage[t] =(cx, e) ->  match p(cx, e) {
+        case TransformResult.Failure(_) => q(cx, e)
         case sk                         => sk
     }
 
 
 
-    pub def tryR(s: Rewrite[ef, t]): Rewrite[ef, t] with Restage[t] = altR(s, idR())
+    pub def tryR(s: Rewrite[ef, ctx, t]): Rewrite[ef, ctx, t] with Restage[t] = altR(s, idR())
 
-    pub def repeatR(s: Rewrite[ef, t]): Rewrite[ef, t] with Restage[t] = 
+    pub def repeatR(s: Rewrite[ef, ctx, t]): Rewrite[ef, ctx, t] with Restage[t] = 
         tryR(seqR(s, repeatR(s)))
 
-    pub def allR(s: Rewrite[ef, t]): Rewrite[ef, t] with Restage[t] = e ->
+    pub def allR(s: Rewrite[ef, ctx, t]): Rewrite[ef, ctx, t] with Restage[t] = (cx, e) ->
         let (cs, fact) = RestageLib.Base.restage(e);
-        let csn = List.map(s, cs);
+        let csn = List.map(x -> s(cx, x), cs);
         if (List.forAll(RestageLib.Base.isSuccess, csn)) {
             let ans = fact(List.map(RestageLib.Base.getSuccess, csn));
             TransformResult.Success(ans)
@@ -51,9 +51,9 @@ mod RestageLib.Combinators {
         }
 
     
-    pub def allT(s: Transform[ef, s, t]): Transform[ef, s, t] with Restage[s], Monoid[t] = e ->
+    pub def allT(s: Transform[ef, cx, s, t]): Transform[ef, cx, s, t] with Restage[s], Monoid[t] = (cx, e) ->
         let cs = Restage.children(e);
-        let csn = List.map(s, cs);
+        let csn = List.map(x -> s(cx, x), cs);
         if (List.forAll(RestageLib.Base.isSuccess, csn)) {
             let ans = Monoid.fold(List.map(RestageLib.Base.getSuccess, csn));
             TransformResult.Success(ans)
@@ -61,14 +61,14 @@ mod RestageLib.Combinators {
             TransformResult.Failure(s)
         }
 
-    pub def oneR(s: Rewrite[ef, t]): Rewrite[ef, t] with Restage[t] = e ->
+    pub def oneR(s: Rewrite[ef, cx, t]): Rewrite[ef, cx, t] with Restage[t] = (cx, e) ->
         let (cs, fact) = RestageLib.Base.restage(e);
         let cs1 = List.zipWithIndex(cs);
         let ans = List.foldLeft((state, ei) ->
             let (cont, _) = state;
             let (idx, exp) = ei;
             if (cont) { 
-                match s(exp) {
+                match s(cx, exp) {
                     case TransformResult.Success(nexp)    => {
                         let csn = List.zipWithIndex(cs) |> List.map(x -> if (fst(x) == idx) nexp else snd(x));
                         (false, TransformResult.Success(fact(csn)))
@@ -81,14 +81,14 @@ mod RestageLib.Combinators {
         snd(ans)
 
     
-    pub def oneT(s: Transform[ef, s, t]): Transform[ef, s, t] with Restage[s] = e ->
+    pub def oneT(s: Transform[ef, cx, s, t]): Transform[ef, cx, s, t] with Restage[s] = (cx,e) ->
         let cs = Restage.children(e);
         let cs1 = List.zipWithIndex(cs);
         let ans = List.foldLeft((state, ei) ->
             let (cont, _) = state;
             let (_, exp) = ei;
             if (cont) { 
-                match s(exp) {
+                match s(cx, exp) {
                     case TransformResult.Success(nexp)  => {
                         (false, TransformResult.Success(nexp))
                     }
