@@ -95,5 +95,36 @@ mod RestageLib.Combinators {
             cs1);
         snd(ans)
 
+
+    pub def contextfreeT(f: a -> b \ ef): Transform[ef, cx, a, b] = (_, e) -> 
+        let ans = f(e);
+        TransformResult.Success(ans)
+
+    pub def contextonlyT(f: cx -> b \ ef): Transform[ef, cx, a, b] = (cx, _) -> 
+        let ans = f(cx);
+        TransformResult.Success(ans)
+
+    pub def pureT(f: cx -> a -> b): Transform[ef, cx, a, b] = (cx, e) -> 
+        let ans = checked_ecast(f(cx, e));
+        TransformResult.Success(ans)
+
+    pub def constT(e: b): Transform[ef, cx, a, b] = (_, _) -> 
+        checked_ecast(TransformResult.Success(e))
+
+    pub def successT(): Transform[ef, cx, a, Unit] = (_, _) -> 
+        checked_ecast(TransformResult.Success(()))
+
+    pub def contextT(): Transform[ef, cx, a, cx] = (cx, _) -> 
+        checked_ecast(TransformResult.Success(cx))
+
+
+    // Won't type chack because of `Transform.Failure` - but do we need 
+    // `Transform.Failure` to contain a strategy as per Elevate?
+    // pub def liftContext(f: cx -> cx1, s: Transform[ef, cx1, a, b]): Transform[ef, cx, a, b] = (cx, e) -> {
+    //     let cx1 = f(cx);
+    //     s(cx1, e)
+    // }
+        
+
 }
 
