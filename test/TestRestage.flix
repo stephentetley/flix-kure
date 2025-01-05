@@ -1,4 +1,4 @@
-   use TestRestage.RewriteResult
+
 /*
  * Copyright 2025 Stephen Tetley
  *
@@ -69,55 +69,67 @@ mod TestRestage {
         }
 
 
-    type alias Strategy[p] = p -> RewriteResult[p]
+    type alias Rewrite[p] = Transform[p, p]
+    type alias Transform[a, b] = a -> TransformResult[a, b]
 
-    pub enum RewriteResult[p] {
-        case Success(p)
-        case Failure(Strategy[p])
+    pub enum TransformResult[a, b] {
+        case Success(b)
+        case Failure(Transform[a, b])
     }
 
-    pub def isSuccess(x: RewriteResult[p]): Bool = match x {
-        case RewriteResult.Success(_) => true
-        case RewriteResult.Failure(_) => false
+    pub def isSuccess(x: TransformResult[a, b]): Bool = match x {
+        case TransformResult.Success(_) => true
+        case TransformResult.Failure(_) => false
     }
 
-    pub def getS(x: RewriteResult[p]): p = match x {
-        case RewriteResult.Success(p) => p
-        case RewriteResult.Failure(_) => bug!("to elim...")
+    pub def getS(x: TransformResult[a, b]): b = match x {
+        case TransformResult.Success(p) => p
+        case TransformResult.Failure(_) => bug!("to elim...")
     }
 
 
 
-    pub def seq(p: Strategy[t], q: Strategy[t]): Strategy[t] with Restage[t] = e -> match p(e) {
-        case RewriteResult.Success(_)   => q(e)
+    pub def seqR(p: Rewrite[t], q: Rewrite[t]): Rewrite[t] with Restage[t] = e -> match p(e) {
+        case TransformResult.Success(_)   => q(e)
         case fk                         => fk
     }
 
 
-    pub def alt(p: Strategy[t], q: Strategy[t]): Strategy[t] with Restage[t] = e -> match p(e) {
-        case RewriteResult.Failure(_)   => q(e)
+    pub def alt(p: Rewrite[t], q: Rewrite[t]): Rewrite[t] with Restage[t] = e -> match p(e) {
+        case TransformResult.Failure(_)   => q(e)
         case sk                         => sk
     }
 
-    pub def id(): Strategy[t] with Restage[t] = e -> RewriteResult.Success(e)
+    pub def idR(): Rewrite[t] with Restage[t] = e -> TransformResult.Success(e)
 
     // aka `try`
-    pub def attempt(s: Strategy[t]): Strategy[t] with Restage[t] = alt(s, id())
+    pub def attemptR(s: Rewrite[t]): Rewrite[t] with Restage[t] = alt(s, idR())
 
-    pub def repeat(s: Strategy[t]): Strategy[t] with Restage[t] = 
-        attempt(seq(s, repeat(s)))
+    pub def repeatR(s: Rewrite[t]): Rewrite[t] with Restage[t] = 
+        attemptR(seqR(s, repeatR(s)))
 
-    pub def all(s: Strategy[t]): Strategy[t] with Restage[t] = e ->
+    pub def allR(s: Rewrite[t]): Rewrite[t] with Restage[t] = e ->
         let (cs, fact) = restage(e);
         let csn = List.map(s, cs);
         if (List.forAll(isSuccess, csn)) {
             let ans = fact(List.map(getS, csn));
-            RewriteResult.Success(ans)
+            TransformResult.Success(ans)
         } else {
-            RewriteResult.Failure(s)
+            TransformResult.Failure(s)
         }
 
-    pub def one(s: Strategy[t]): Strategy[t] with Restage[t] = e ->
+    
+    pub def allT(s: Transform[s, t]): Transform[s, t] with Restage[s], Monoid[t] = e ->
+        let cs = Restage.children(e);
+        let csn = List.map(s, cs);
+        if (List.forAll(isSuccess, csn)) {
+            let ans = Monoid.fold(List.map(getS, csn));
+            TransformResult.Success(ans)
+        } else {
+            TransformResult.Failure(s)
+        }
+
+    pub def oneR(s: Rewrite[t]): Rewrite[t] with Restage[t] = e ->
         let (cs, fact) = restage(e);
         let cs1 = List.zipWithIndex(cs);
         let ans = List.foldLeft((state, ei) ->
@@ -125,14 +137,33 @@ mod TestRestage {
             let (idx, exp) = ei;
             if (cont) { 
                 match s(exp) {
-                    case RewriteResult.Success(nexp)    => {
-                        let csn = List.zipWithIndex(cs) |> List.map(x -> if (fst(x) == idx) nexp else snd(x));                        
-                        (false, RewriteResult.Success(fact(csn)))
+                    case TransformResult.Success(nexp)    => {
+                        let csn = List.zipWithIndex(cs) |> List.map(x -> if (fst(x) == idx) nexp else snd(x));
+                        (false, TransformResult.Success(fact(csn)))
                     }
                     case f                              => (true, f)
                 }
             } else state,
-            (true, RewriteResult.Failure(s)), 
+            (true, TransformResult.Failure(s)), 
+            cs1);
+        snd(ans)
+
+    
+    pub def oneT(s: Transform[s, t]): Transform[s, t] with Restage[s] = e ->
+        let cs = Restage.children(e);
+        let cs1 = List.zipWithIndex(cs);
+        let ans = List.foldLeft((state, ei) ->
+            let (cont, _) = state;
+            let (_, exp) = ei;
+            if (cont) { 
+                match s(exp) {
+                    case TransformResult.Success(nexp)  => {
+                        (false, TransformResult.Success(nexp))
+                    }
+                    case f                              => (true, f)
+                }
+            } else state,
+            (true, TransformResult.Failure(s)), 
             cs1);
         snd(ans)
 
