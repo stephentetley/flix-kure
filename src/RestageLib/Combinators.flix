@@ -20,33 +20,38 @@ mod RestageLib.Combinators {
     use RestageLib.Base.Restage
     use RestageLib.Base.{Transform, Rewrite, TransformResult}
 
-    pub def idR(): Rewrite[ef, cx, t] with Restage[t] = 
-        Transform.Transform((_, e) -> checked_ecast(TransformResult.Success(e)))
+    pub def idR(): Rewrite[ef, cx, t] = 
+        Transform.Transform((_, e) -> checked_ecast(Ok(e)))
 
-    pub def seqR(p: Rewrite[ef, cx, t], q: Rewrite[ef, cx, t]): Rewrite[ef, cx, t] with Restage[t] = 
+
+    pub def failT(): Transform[ef, cx, a, b] = 
+        Transform.Transform((_, _) -> checked_ecast(Err("Failure")))
+
+
+    pub def seqR(p: Rewrite[ef, cx, t], q: Rewrite[ef, cx, t]): Rewrite[ef, cx, t] = 
         Transform.Transform((cx, e) -> 
             let Transform.Transform(pf) = p;
             let Transform.Transform(qf) = q;
             match pf(cx, e) {
-                case TransformResult.Success(e1)    => qf(cx, e1)
-                case fk                             => fk
+                case Ok(e1) => qf(cx, e1)
+                case fk     => fk
         })
 
 
-    pub def altR(p: Rewrite[ef, cx, t], q: Rewrite[ef, cx, t]): Rewrite[ef, cx, t] with Restage[t] =
+    pub def altR(p: Rewrite[ef, cx, t], q: Rewrite[ef, cx, t]): Rewrite[ef, cx, t] =
         Transform.Transform((cx, e) -> 
             let Transform.Transform(pf) = p;
             let Transform.Transform(qf) = q;
             match pf(cx, e) {
-                case TransformResult.Failure    => qf(cx, e)
-                case sk                         => sk
+                case Err(_) => qf(cx, e)
+                case sk     => sk
             })
 
 
 
-    pub def tryR(s: Rewrite[ef, ctx, t]): Rewrite[ef, ctx, t] with Restage[t] = altR(s, idR())
+    pub def tryR(s: Rewrite[ef, ctx, t]): Rewrite[ef, ctx, t] = altR(s, idR())
 
-    pub def repeatR(s: Rewrite[ef, ctx, t]): Rewrite[ef, ctx, t] with Restage[t] = 
+    pub def repeatR(s: Rewrite[ef, ctx, t]): Rewrite[ef, ctx, t] = 
         tryR(seqR(s, repeatR(s)))
 
     pub def allR(s: Rewrite[ef, ctx, t]): Rewrite[ef, ctx, t] with Restage[t] = 
@@ -54,8 +59,8 @@ mod RestageLib.Combinators {
             let (cs, fact) = RestageLib.Base.restage(e);
             let csn = List.map(x -> RestageLib.Base.applyT(s, cx, x), cs);
             match RestageLib.Base.allSuccesses(csn) {
-                case Some(xs) => TransformResult.Success(fact(xs))
-                case None     => TransformResult.Failure
+                case Some(xs) => Ok(fact(xs))
+                case None     => Err("allR")
             })
 
     
@@ -64,8 +69,8 @@ mod RestageLib.Combinators {
             let cs = Restage.children(e);
             let csn = List.map(x -> RestageLib.Base.applyT(s, cx, x), cs);
             match RestageLib.Base.allSuccesses(csn) {
-                case Some(xs) => TransformResult.Success(Monoid.fold(xs))
-                case None     => TransformResult.Failure
+                case Some(xs) => Ok(Monoid.fold(xs))
+                case None     => Err("allT")
             })
 
     pub def oneR(s: Rewrite[ef, cx, t]): Rewrite[ef, cx, t] with Restage[t] = 
@@ -77,14 +82,14 @@ mod RestageLib.Combinators {
                 let (idx, exp) = ei;
                 if (cont) { 
                     match RestageLib.Base.applyT(s, cx, exp) {
-                        case TransformResult.Success(nexp)    => {
+                        case Ok(nexp)   => {
                             let csn = List.zipWithIndex(cs) |> List.map(x -> if (fst(x) == idx) nexp else snd(x));
-                            (false, TransformResult.Success(fact(csn)))
+                            (false, Ok(fact(csn)))
                         }
-                        case f                              => (true, f)
+                        case f          => (true, f)
                     }
                 } else state,
-                (true, TransformResult.Failure), 
+                (true, Err("oneR")), 
                 cs1);
             snd(ans))
 
@@ -98,13 +103,13 @@ mod RestageLib.Combinators {
                 let (_, exp) = ei;
                 if (cont) { 
                     match RestageLib.Base.applyT(s, cx, exp) {
-                        case TransformResult.Success(nexp)  => {
-                            (false, TransformResult.Success(nexp))
+                        case Ok(nexp)   => {
+                            (false, Ok(nexp))
                         }
-                        case f                              => (true, f)
+                        case f          => (true, f)
                     }
                 } else state,
-                (true, TransformResult.Failure), 
+                (true, Err("oneT")), 
                 cs1);
             snd(ans))
 
@@ -112,42 +117,34 @@ mod RestageLib.Combinators {
     pub def contextfreeT(f: a -> b \ ef): Transform[ef, cx, a, b] = 
         Transform.Transform((_, e) ->
             let ans = f(e);
-            TransformResult.Success(ans)
+            Ok(ans)
         )
 
     pub def contextonlyT(f: cx -> b \ ef): Transform[ef, cx, a, b] = 
         Transform.Transform((cx, _) ->
             let ans = f(cx);
-            TransformResult.Success(ans)
+            Ok(ans)
         )
 
     pub def pureT(f: cx -> a -> b): Transform[ef, cx, a, b] = 
         Transform.Transform((cx, e) ->
             let ans = checked_ecast(f(cx, e));
-            TransformResult.Success(ans)
+            Ok(ans)
         )
 
 
     pub def constT(e: b): Transform[ef, cx, a, b] =
-        Transform.Transform((_, _) ->
-            checked_ecast(TransformResult.Success(e))
-        )
+        Transform.Transform((_, _) -> checked_ecast(Ok(e)))
 
     pub def successT(): Transform[ef, cx, a, Unit] = 
-        Transform.Transform((_, _) ->
-            checked_ecast(TransformResult.Success(()))
-        )
+        Transform.Transform((_, _) -> checked_ecast(Ok(())))
 
     pub def contextT(): Transform[ef, cx, a, cx] =
-        Transform.Transform((cx, _) ->
-            checked_ecast(TransformResult.Success(cx))
-        )
+        Transform.Transform((cx, _) -> checked_ecast(Ok(cx)))
 
 
     pub def exposeT(): Transform[ef, cx, a, (cx, a)] =
-        Transform.Transform((cx, a) ->
-            checked_ecast(TransformResult.Success((cx, a)))
-        )
+        Transform.Transform((cx, a) -> checked_ecast(Ok((cx, a))))
 
 
     pub def liftContext(f: cx -> cx1, s: Transform[ef, cx1, a, b]): Transform[ef, cx, a, b] = 
@@ -165,31 +162,43 @@ mod RestageLib.Combinators {
     pub def optionT(f: (cx, a) -> Option[b] \ ef): Transform[ef, cx, a, b] = 
         Transform.Transform((cx, e) ->
             match f(cx, e) {
-                case Some(a) => TransformResult.Success(a)
-                case None    => TransformResult.Failure
+                case Some(a) => Ok(a)
+                case None    => Err("optionT")
             })
         
     pub def resultT(f: (cx, a) -> Result[err, b] \ ef): Transform[ef, cx, a, b] = 
-        Transform.Transform((cx, e) ->
-            match f(cx, e) {
-              case Ok(a)  => TransformResult.Success(a)
-                case Err(_) => TransformResult.Failure
-            })
+        Transform.Transform((cx, e) -> f(cx, e) |> Result.mapErr(_ -> "resultT"))
 
     pub def mapT(s: Transform[ef, cx, a, b]): Transform[ef + Foldable.Aef[t], cx, t[a], t[b]] with Traversable[t] = 
         Transform.Transform((cx, es) ->
-            let mf = RestageLib.Base.applyT(s, cx) >> RestageLib.Base.toResult;
-            match Traversable.traverse(mf, es) {
-                case Ok(xs) => TransformResult.Success(xs)
-                case Err(_) => TransformResult.Failure
-            })
+            let mf = RestageLib.Base.applyT(s, cx);
+            Traversable.traverse(mf, es) |> Result.mapErr(_ -> "mapT")
+        )
+
+
+    pub def guardT(): Transform[ef, cx, Bool, Unit] = 
+        Transform.Transform((_, e) -> checked_ecast(match e {
+            case true   => Ok(())
+            case false  => Err("guardT")
+        }))
+
 
     pub def andR(ts: f[Rewrite[ef, cx, a]]): Rewrite[ef + Foldable.Aef[f], cx, a] with Restage[a], Foldable[f] = 
         Transform.Transform((cx, e) ->
-            let f = Foldable.foldRight((b, a) -> seqR(a, b), idR(), ts);
+            let f = Foldable.foldRight((a, b) -> seqR(a, b), idR(), ts);
             RestageLib.Base.applyT(f, cx, e)
         )
 
+    pub def orR(ts: f[Rewrite[ef, cx, a]]): Rewrite[ef + Foldable.Aef[f], cx, a] with Restage[a], Foldable[f] = 
+        Transform.Transform((cx, e) ->
+            Foldable.foldRightWithCont((f1, k) -> 
+                    match RestageLib.Base.applyT(f1, cx, e) { 
+                        case Ok(a)  => Ok(a)
+                        case Err(_) => k()
+                    }, 
+                Err("orR"), 
+                ts)
+        )
 
 
 

@@ -26,16 +26,12 @@ mod RestageLib.Base {
         case Transform((cx, a) -> TransformResult[b] \ ef)
     }
 
-    // TODO - change to Result with String for error?
-    pub enum TransformResult[a] {
-        case Success(a)
-        case Failure
-    }
+    pub type alias TransformResult[a] = Result[String, a]
 
-    pub def toResult(x: TransformResult[a]): Result[String, a] = match x {
-        case TransformResult.Success(a) => Ok(a)
-        case TransformResult.Failure    => Err("Failure")
-    }
+    // pub def toResult(x: TransformResult[a]): Result[String, a] = match x {
+    //     case TransformResult.Success(a) => Ok(a)
+    //     case TransformResult.Failure    => Err("Failure")
+    // }
 
     pub def applyT(t: Transform[ef, cx, a, b], cx: cx, a: a): TransformResult[b] \ ef =
         let Transform.Transform(f) = t;
@@ -51,10 +47,6 @@ mod RestageLib.Base {
         let fact = Restage.factory(e);
         (cs, fact)
 
-    pub def isSuccess(x: TransformResult[a]): Bool = match x {
-        case TransformResult.Success(_) => true
-        case TransformResult.Failure    => false
-    }
 
     // This is partial so we don't want to reintroduce it if we can avoid it...
     // pub def getSuccess(x: TransformResult[ef, cx, a, b]): b = match x {
@@ -65,9 +57,9 @@ mod RestageLib.Base {
 
     pub def allSuccesses(xs: List[TransformResult[a]]): Option[List[a]] = 
         def loop(ll, fk, sk) = match ll {
-            case Nil                                => sk(Nil)
-            case TransformResult.Success(p) :: rs   => loop(rs, fk, ks -> sk(p :: ks))
-            case TransformResult.Failure :: _       => fk()
+            case Nil            => sk(Nil)
+            case Ok(p) :: rs    => loop(rs, fk, ks -> sk(p :: ks))
+            case Err(_) :: _    => fk()
         };
         loop(xs, _ -> None, ks -> Some(ks))
 
