@@ -143,6 +143,13 @@ mod RestageLib.Combinators {
             checked_ecast(TransformResult.Success(cx))
         )
 
+
+    pub def exposeT(): Transform[ef, cx, a, (cx, a)] =
+        Transform.Transform((cx, a) ->
+            checked_ecast(TransformResult.Success((cx, a)))
+        )
+
+
     pub def liftContext(f: cx -> cx1, s: Transform[ef, cx1, a, b]): Transform[ef, cx, a, b] = 
         Transform.Transform((cx, e) ->
             let cx1 = f(cx);
@@ -169,7 +176,13 @@ mod RestageLib.Combinators {
                 case Err(_) => TransformResult.Failure
             })
 
-
+    pub def mapT(s: Transform[ef, cx, a, b]): Transform[ef + Foldable.Aef[t], cx, t[a], t[b]] with Traversable[t] = 
+        Transform.Transform((cx, es) ->
+            let mf = RestageLib.Base.applyT(s, cx) >> RestageLib.Base.toResult;
+            match Traversable.traverse(mf, es) {
+                case Ok(xs) => TransformResult.Success(xs)
+                case Err(_) => TransformResult.Failure
+            })
 
     pub def andR(ts: f[Rewrite[ef, cx, a]]): Rewrite[ef + Foldable.Aef[f], cx, a] with Restage[a], Foldable[f] = 
         Transform.Transform((cx, e) ->

@@ -26,14 +26,25 @@ mod RestageLib.Base {
         case Transform((cx, a) -> TransformResult[b] \ ef)
     }
 
+    // TODO - change to Result with String for error?
     pub enum TransformResult[a] {
         case Success(a)
         case Failure
     }
 
+    pub def toResult(x: TransformResult[a]): Result[String, a] = match x {
+        case TransformResult.Success(a) => Ok(a)
+        case TransformResult.Failure    => Err("Failure")
+    }
+
     pub def applyT(t: Transform[ef, cx, a, b], cx: cx, a: a): TransformResult[b] \ ef =
         let Transform.Transform(f) = t;
         f(cx, a)
+
+
+    pub def applyR(t: Rewrite[ef, cx, a], cx: cx, a: a): TransformResult[a] \ ef = applyT(t, cx, a)
+        
+
 
     pub def restage(e: t): (List[t], List[t] -> t) with Restage[t] = 
         let cs = Restage.children(e);
