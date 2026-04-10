@@ -137,8 +137,8 @@ mod KIR.Base {
             }) as _ \ ef)
 
 
-    pub def idT(a: a): Transform[cx, a, a] =
-        Transform.Transform((_, _) -> Ok(a))
+    pub def idT(): Transform[cx, a, a] =
+        Transform.Transform((_, a) -> Ok(a))
 
 
     pub def composeT(t1: Transform[cx, b, c], t2: Transform[cx, a, b]): Transform[cx, a, c] =
@@ -189,8 +189,8 @@ mod KIR.Base {
         transform((cx, _) -> f(cx))
 
 
-    pub def constT(b: b): Transform[cx, a, b] = 
-        contextFreeT(_ -> Ok(b))
+    pub def constT(ab: Answer[b]): Transform[cx, a, b] = 
+        contextFreeT(_ -> ab)
 
     pub def effectFreeT(f: (cx, a) -> Answer[b]): Transform[cx, a, b] = 
         transform((cx, a) -> f(cx, a))
@@ -200,7 +200,19 @@ mod KIR.Base {
 
     // Combinators.Transform
 
-    pub def idR(a: a): Rewrite[cx, a] = idT(a)
+    pub def idR(): Rewrite[cx, a] = idT()
+
+    pub def successT(): Transform[cx, a, Unit] = Applicative.point()
+
+    pub def contextT(): Transform[cx, a, cx] = 
+        transform((cx, _) -> Ok(cx))
+
+    pub def exposeT(): Transform[cx, a, (cx, a)] = 
+        transform((cx, a) -> Ok((cx, a)))
+
+
+
+
 
 
 
