@@ -17,9 +17,6 @@
 
 mod KIR.Base {
 
-    use InteropJson.JsonValue
-    use InteropJson.JsonArray
-    use InteropJson.JsonObject
 
     pub type alias Answer[a] = Result[String, a]
 
@@ -75,55 +72,9 @@ mod KIR.Base {
     }
 
 
-    pub trait Injection[a] {
-        type Universe[a]: Type
+    pub def failT(msg: String): Transform[cx, a, b] = 
+        Transform.Transform((_, _) -> Err(msg))
 
-        pub def inj(a: a): Injection.Universe[a]
-
-        pub def proj(u: Injection.Universe[a]): Option[a]
-    }
-
-    pub enum U {
-        case UV(JsonValue)
-        case UA(JsonArray)
-        case UO(JsonObject)
-    }
-
-    instance Injection[JsonValue] {
-        type Universe[JsonValue] = U
-        
-        pub def inj(a: JsonValue): U = U.UV(a)
-        pub def proj(u: U): Option[JsonValue] = match u {
-            case U.UV(x) => Some(x)
-            case _       => None
-
-        }
-    }
-
-
-    instance Injection[JsonArray] {
-        type Universe[JsonArray] = U
-        
-        pub def inj(a: JsonArray): U = U.UA(a)
-        pub def proj(u: U): Option[JsonArray] = match u {
-            case U.UA(x) => Some(x)
-            case _       => None
-
-        }
-    }
-
-    instance Injection[JsonObject] {
-        type Universe[JsonObject] = U
-        
-        pub def inj(a: JsonObject): U = U.UO(a)
-        pub def proj(u: U): Option[JsonObject] = match u {
-            case U.UO(x) => Some(x)
-            case _       => None
-
-        }
-    }
-
-    pub def fail(msg: String): Answer[a] = Err(msg)
 
     pub def catchErr(t: Transform[cx, a, b], th: String -> Transform[cx, a, b] \ ef): Transform[cx, a, b] \ ef = 
         unchecked_cast(Transform.Transform((cx, a) -> 
@@ -194,8 +145,6 @@ mod KIR.Base {
     pub def effectFreeT(f: (cx, a) -> Answer[b]): Transform[cx, a, b] = 
         transform((cx, a) -> f(cx, a))
 
-    pub def injectT(): Transform[cx, a, u] with Injection[a] where Injection.Universe[a] ~ u = 
-        arrT(Injection.inj)
 
     // Combinators.Transform
 
@@ -276,6 +225,14 @@ mod KIR.Base {
             case Err(_) => Ok(x)
             case Ok(a1) => repeatRHelper(t, cx, a1)
         }
+
+    pub def acceptWithFailMsgR(p: a -> Bool, msg: String): Rewrite[cx, a] = 
+        readerT(a -> if (p(a)) idR() else failT(msg))
+
+    pub def acceptR(p: a -> Bool): Rewrite[cx, a] = 
+        acceptWithFailMsgR(p, "acceptR: predicate failed")
+
+
 
 }
 
