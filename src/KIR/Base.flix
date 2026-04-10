@@ -90,13 +90,22 @@ mod KIR.Base {
     pub def idT(): Transform[cx, a, a] =
         Transform.Transform((_, a) -> Ok(a))
 
-
-    pub def composeT(t1: Transform[cx, b, c], t2: Transform[cx, a, b]): Transform[cx, a, c] =
+    // Haskell's (<<<)
+    pub def composeRightT(t1: Transform[cx, b, c], t2: Transform[cx, a, b]): Transform[cx, a, c] =
         Transform.Transform((cx, a) -> 
             match runTransform(t2, cx, a) {
                 case Ok(b)    => runTransform(t1, cx, b)
                 case Err(msg) => Err(msg)
             })
+
+    // Haskell's (>>>)
+    pub def composeLeftT(t1: Transform[cx, a, b], t2: Transform[cx, b, c]): Transform[cx, a, c] =
+        Transform.Transform((cx, a) -> 
+            match runTransform(t1, cx, a) {
+                case Ok(b)    => runTransform(t2, cx, b)
+                case Err(msg) => Err(msg)
+            })
+
 
     pub def arrT(f: a -> b \ ef): Transform[cx, a, b] \ ef =
         unchecked_cast(Transform.Transform((_, a) -> Ok(unchecked_cast(f(a) as _ \ {}))) as _ \ ef)

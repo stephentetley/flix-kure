@@ -17,7 +17,7 @@
 
 mod KIR.Injection {
 
-    use KIR.Base.{Transform}
+    use KIR.Base.{Answer, Rewrite, Transform}
 
     use InteropJson.JsonValue
     use InteropJson.JsonArray
@@ -41,6 +41,7 @@ mod KIR.Injection {
         type Universe[JsonValue] = U
         
         pub def inj(a: JsonValue): U = U.UV(a)
+
         pub def proj(u: U): Option[JsonValue] = match u {
             case U.UV(x) => Some(x)
             case _       => None
@@ -74,6 +75,30 @@ mod KIR.Injection {
     pub def injectT(): Transform[cx, a, u] with Injection[a] where Injection.Universe[a] ~ u = 
         KIR.Base.arrT(Injection.inj)
 
+    def projectWithFailMsgHelper(msg: String, u: u): Answer[a] with Injection[a] where Injection.Universe[a] ~ u = 
+        match Injection.proj(u) {
+            case None => Err(msg)
+            case Some(ans) => Ok(ans)
+        }
+
+    pub def projectWithFailMsgT(msg: String): Transform[cx, u, a] with Injection[a] where Injection.Universe[a] ~ u =  
+        KIR.Base.contextFreeT(u -> projectWithFailMsgHelper(msg, u))
+
+
+    pub def projectT(): Transform[cx, u, a] with Injection[a] where Injection.Universe[a] ~ u = 
+        projectWithFailMsgT("projectT failed")
+
+    pub def extractT(t: Transform[cx, u, b]): Transform[cx, a, b] with Injection[a] where Injection.Universe[a] ~ u = 
+        KIR.Base.composeLeftT(injectT(), t)
+
+    pub def promoteT(t: Transform[cx, a, b]): Transform[cx, u, b] with Injection[a] where Injection.Universe[a] ~ u = 
+        KIR.Base.composeLeftT(projectT(), t)
+
+    pub def promoteR(r: Rewrite[cx, a]): Rewrite[cx, u] with Injection[a] where Injection.Universe[a] ~ u = 
+        KIR.Base.composeLeftT(
+            KIR.Base.composeLeftT(projectT(), r),
+            injectT()
+        )
 
 }
 
