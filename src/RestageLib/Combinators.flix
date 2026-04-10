@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-mod RestageLib.Combinators {
+pub mod RestageLib.Combinators {
 
 
     use RestageLib.Base.Restage
@@ -189,16 +189,16 @@ mod RestageLib.Combinators {
             RestageLib.Base.applyT(f, cx, e)
         )
 
-    pub def orR(ts: f[Rewrite[ef, cx, a]]): Rewrite[ef + Foldable.Aef[f], cx, a] with Restage[a], Foldable[f] = 
-        Transform.Transform((cx, e) ->
-            Foldable.foldRightWithCont((f1, k) -> 
-                    match RestageLib.Base.applyT(f1, cx, e) { 
-                        case Ok(a)  => Ok(a)
-                        case Err(_) => k()
-                    }, 
-                Err("orR"), 
-                ts)
-        )
+    // pub def orR(ts: f[Rewrite[ef, cx, a]]): Rewrite[ef + Foldable.Aef[f], cx, a] with Restage[a], Foldable[f] = 
+    //     Transform.Transform((cx, e) ->
+    //         Foldable.foldRight((f1, k) -> 
+    //                 match RestageLib.Base.applyT(f1, cx, e) { 
+    //                     case Ok(a)  => Ok(a)
+    //                     case Err(_) => k()
+    //                 }, 
+    //             Err("orR"), 
+    //             ts)
+    //     )
 
 
 

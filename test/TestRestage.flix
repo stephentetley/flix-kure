@@ -15,7 +15,9 @@
  * limitations under the License.
  */
 
-mod TestRestage {
+pub mod TestRestage {
+
+    use Assert.{assertEq}
 
     use RestageLib.Base.Restage
     use RestageLib.Base.{Transform, Rewrite, TransformResult}
@@ -68,9 +70,12 @@ mod TestRestage {
 
 
 
-    @test
-    pub def test01(): Bool = 
-        Restage.factory(Exp.Const(0.0f64), Nil) == Exp.Const(0.0f64)
+    @Test
+    pub def test01(): Unit \ {Assert} = 
+        assertEq(
+            expected = Exp.Const(0.0f64),
+            Restage.factory(Exp.Const(0.0f64), Nil)
+        )
 
 
 }
