@@ -21,10 +21,12 @@ pub mod RestageLib.Base {
         pub def factory(e: t, cs: List[t]): t
     }
 
-    pub type alias Rewrite[ef: Eff, cx: Type, p: Type] = Transform[ef, cx, p, p]
+
     pub enum Transform[ef: Eff, cx: Type, a: Type, b: Type] { 
         case Transform((cx, a) -> TransformResult[b] \ ef)
     }
+
+    pub type alias Rewrite[ef: Eff, cx: Type, p: Type] = Transform[ef, cx, p, p]
 
     pub type alias TransformResult[a] = Result[String, a]
 
