@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-mod RestageLib.Base {
+pub mod RestageLib.Base {
 
     pub trait Restage[t] {
         pub def children(x: t): List[t]
