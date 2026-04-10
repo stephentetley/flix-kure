@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Stephen Tetley
+ * Copyright 2026 Stephen Tetley
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 
 mod KIR.Base {
-    
 
     use InteropJson.JsonValue
     use InteropJson.JsonArray
@@ -210,11 +209,74 @@ mod KIR.Base {
     pub def exposeT(): Transform[cx, a, (cx, a)] = 
         transform((cx, a) -> Ok((cx, a)))
 
+    pub def liftContext(upd: cx -> cx1 \ ef, t: Transform[cx1, a, b]): Transform[cx, a, b] \ ef= 
+        transform((cx, a) -> {
+            let cx1 = upd(cx);
+            applyT(t, cx1, a)
+        })
+        
+    pub def readerT(f: a -> Transform[cx, a, b]): Transform[cx, a, b] = 
+        transform((cx, a) -> {
+            let t1 = f(a);
+            applyT(t1, cx, a)
+        })
 
+    // no `resultT` because we aren't a Monad transformer
 
+    // Apply all rewrites in `ts`
+    pub def andR(ts: t[Rewrite[cx, a]]): Rewrite[cx, a] \ Foldable.Aef[t] with Foldable[t] = 
+        transform((cx, a) -> 
+            Foldable.foldRight(
+                (f, ra) -> match ra {
+                                case Ok(a1)     => applyT(f, cx, a1)
+                                case Err(msg) => Err(msg)
+                },
+                Ok(a), 
+                ts))
 
+    pub def orR(ts: t[Rewrite[cx, a]]): Rewrite[cx, a] \ Foldable.Aef[t] with Foldable[t] = 
+        transform((cx, a) -> 
+            Foldable.foldRight(
+                (f, ra) -> match ra {
+                                case Ok(a1) => Ok(a1)
+                                case Err(_) => applyT(f, cx, a)
+                },
+                Err("orR"), 
+                ts)) 
 
+    // (<+>) in Haskell KURE
+    pub def eitherOrBothR(t1: Rewrite[cx, a], t2: Rewrite[cx, a]): Rewrite[cx, a] = 
+        transform((cx, a) -> 
+            match applyT(t1, cx, a) {
+                case Err(_) => applyT(t2, cx, a)
+                case Ok(a1) => match applyT(t1, cx, a1) {
+                    case Err(_) => Ok(a1)
+                    case Ok(a2) => Ok(a2)
+                } 
+        })
 
+    pub def mapT(t: Transform[cx, a, b]): Transform[cx, List[a], List[b]] = 
+        transform((cx, xs) -> List.traverse(x -> applyT(t, cx, x), xs))
+
+    pub def guardT(): Transform[cx, Bool, Unit] = 
+        transform((_, a) -> if (a) Ok() else Err("guardT failed"))
+
+    pub def tryR(t: Rewrite[cx, a]): Rewrite[cx, a] = 
+        catchErr(t, _msg -> idR())
+
+    // first attempt must succeed
+    pub def repeatR(t: Rewrite[cx, a]): Rewrite[cx, a] = 
+        rewrite((cx, a) -> match applyT(t, cx, a) {
+                                case Ok(a1) => repeatRHelper(t, cx, a1)
+                                case Err(msg) => Err(msg)
+                            })
+    @Tailrec
+    def repeatRHelper(t: Rewrite[cx, a], cx: cx, x: a): Answer[a] = 
+        match applyT(t, cx, x) {
+            case Err(_) => Ok(x)
+            case Ok(a1) => repeatRHelper(t, cx, a1)
+        }
 
 }
+
 

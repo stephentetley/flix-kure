@@ -17,8 +17,12 @@
 
 pub mod TestKIR {
     use TestKIR.NoCtx
+    
 
     use Assert.{assertEq, assertTrue}
+    use KIR.Base.{Rewrite}
+    use KIR.Base.{applyT}
+
 
     pub enum NoCtx with Eq, ToString { case NoCtx }
 
@@ -26,7 +30,7 @@ pub mod TestKIR {
 
     @Test
     pub def successT01(): Unit \ {Assert, IO} = 
-        let ans = KIR.Base.applyT(KIR.Base.successT(), noCtx(), 10);
+        let ans = applyT(KIR.Base.successT(), noCtx(), 10);
         println(ans);
         assertEq(
             expected = Ok(()),
@@ -35,7 +39,7 @@ pub mod TestKIR {
 
     @Test
     pub def constT02(): Unit \ {Assert, IO} = 
-        let ans = KIR.Base.applyT(KIR.Base.constT(Applicative.point(12)), noCtx(), 10);
+        let ans = applyT(KIR.Base.constT(Applicative.point(12)), noCtx(), 10);
         println(ans);
         assertEq(
             expected = Ok(12),
@@ -44,7 +48,7 @@ pub mod TestKIR {
 
     @Test
     pub def contextT01(): Unit \ {Assert, IO} = 
-        let ans = KIR.Base.applyT(KIR.Base.contextT(), noCtx(), 10);
+        let ans = applyT(KIR.Base.contextT(), noCtx(), 10);
         println(ans);
         assertEq(
             expected = Ok(NoCtx.NoCtx),
@@ -53,10 +57,23 @@ pub mod TestKIR {
 
     @Test
     pub def exposeT01(): Unit \ {Assert, IO} = 
-        let ans = KIR.Base.applyT(KIR.Base.exposeT(), noCtx(), 10);
+        let ans = applyT(KIR.Base.exposeT(), noCtx(), 10);
         println(ans);
         assertEq(
             expected = Ok((NoCtx.NoCtx, 10)),
+            ans
+        )
+
+    pub def plus1R(): Rewrite[cx, Int32] = 
+        KIR.Base.contextFreeT(i -> Ok(i+1))
+
+    @Test
+    pub def mapT01(): Unit \ {Assert, IO} = 
+        let tf = KIR.Base.mapT(plus1R());
+        let ans = applyT(tf, noCtx(), List#{10, 9, 8});
+        println(ans);
+        assertEq(
+            expected = Ok(List#{11, 10, 9}),
             ans
         )
 
