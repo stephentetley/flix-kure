@@ -17,7 +17,7 @@
 
 mod KIR.Walker {
 
-    use KIR.Base.{Rewrite}
+    use KIR.Base.{Transform, Rewrite}
 
     use InteropJson.JsonValue
     use InteropJson.JsonArray
@@ -36,6 +36,53 @@ mod KIR.Walker {
         pub def allR(t: Rewrite[Unit, JsonArray]): Rewrite[Unit, JsonArray] = ???
         
     }
+
+    // Congruence combinators (to be moved out of the library at some point)
+
+    // `getNull` should be renamed `getJsonNull`, add `getJsonTrue`, `getJsonFalse`
+
+    pub def jsonNullT(b: b): Transform[cx, JsonValue, b] = 
+        KIR.Base.contextFreeT(a -> 
+            match InteropJson.JsonValue.getNull(a) {
+                case Some() => Ok(b)
+                case None   => Err("not a JsonNull")
+            }
+        )
+
+    // No rewrite combinators for JSonNull, JsonFalse, JsonTrue, JsonNumber, JsonString
+
+    pub def jsonTrueT(b: b): Transform[cx, JsonValue, b] = 
+        KIR.Base.contextFreeT(a -> 
+            match InteropJson.JsonValue.getBool(a) {
+                case Some(a1) if a1 => Ok(b)
+                case _              => Err("not a JsonTrue")
+            }
+        )
+
+    pub def jsonFalseT(b: b): Transform[cx, JsonValue, b] = 
+        KIR.Base.contextFreeT(a -> 
+            match InteropJson.JsonValue.getBool(a) {
+                case Some(a1) if not a1 => Ok(b)
+                case _                  => Err("not a JsonFalse")
+            }
+        )
+
+
+    pub def jsonStringT(f: String -> b \ ef): Transform[cx, JsonValue, b] \ ef= 
+        KIR.Base.contextFreeT(a -> 
+            match InteropJson.JsonValue.getString(a) {
+                case Some(s) => Functor.map(f, Ok(s))
+                case None    => Err("not a JsomnNull")
+            }
+        )     
+
+    pub def jsonNumberT(f: BigDecimal -> b \ ef): Transform[cx, JsonValue, b] \ ef= 
+        KIR.Base.contextFreeT(a -> 
+            match InteropJson.JsonValue.getBigDecimal(a) {
+                case Some(s) => Functor.map(f, Ok(s))
+                case None    => Err("not a JsomnNull")
+            }
+        )   
 
 
 }
