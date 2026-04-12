@@ -32,7 +32,7 @@ mod KIR.Walker {
         
         pub def oneR(t: Rewrite[Walker.Context[u], u]): Rewrite[Walker.Context[u], u]
 
-        // pub def allT(t: Transform[Walker.Context[u], u, b]): Transform[Walker.Context[u], u, b] with Monoid[b]
+        pub def allT(t: Transform[Walker.Context[u], u, b]): Transform[Walker.Context[u], u, b] with Monoid[b]
 
         pub def oneT(t: Transform[Walker.Context[u], u, b]): Transform[Walker.Context[u], u, b]
         

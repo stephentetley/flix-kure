@@ -307,7 +307,7 @@ mod KIR.Congruence {
             }
         )
 
-    // List
+    // List (Traversable)
 
     pub def anyRTraversable(r1: Rewrite[cx, kid]): Rewrite[cx, t[kid]] \ Foldable.Aef[t] with Traversable[t] = 
         rewrite((cx, xs) -> 
@@ -336,6 +336,19 @@ mod KIR.Congruence {
             if (acc) Ok(ys) else Err("oneRTraversable failed")
         )
 
+
+    // Combine all successes (monoid required)
+    pub def allTFoldable(t1: Transform[cx, kid, b]): Transform[cx, t[kid], b] \ Foldable.Aef[t] with Traversable[t], Monoid[b] = 
+        transform((cx, xs) -> 
+            def step(acc, x) = match acc {
+                case Ok(b) => applyT(t1, cx, x) |> Functor.map(Monoid.combine(b))
+                case _     => acc
+            };
+            Foldable.foldLeft(step, Ok(Monoid.empty()), xs) 
+                |> Result.mapErr(_ -> "allTFoldable failed")
+        )
+
+
     // Get the first success (no monoid required)
     pub def oneTFoldable(t1: Transform[cx, kid, b]): Transform[cx, t[kid], b] \ Foldable.Aef[t] with Traversable[t] = 
         transform((cx, xs) -> 
@@ -348,7 +361,7 @@ mod KIR.Congruence {
                 case _   => acc
             };
             Foldable.foldLeft(step, None, xs) 
-                |> Option.toOk("oneTTraversable failed")
+                |> Option.toOk("oneTFoldable failed")
         )
 
 
