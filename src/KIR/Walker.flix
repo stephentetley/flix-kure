@@ -27,15 +27,12 @@ mod KIR.Walker {
         type Context[a]: Type
 
         pub def allR(t: Rewrite[Walker.Context[a], a]): Rewrite[Walker.Context[a], a] 
+
+        pub def anyR(t: Rewrite[Walker.Context[a], a]): Rewrite[Walker.Context[a], a]
         
     }
 
-    instance Walker[JsonArray] {
-        type Context[JsonArray] = Unit
 
-        pub def allR(t: Rewrite[Unit, JsonArray]): Rewrite[Unit, JsonArray] = ???
-        
-    }
 
 
 

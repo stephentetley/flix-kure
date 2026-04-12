@@ -31,46 +31,6 @@ mod KIR.Injection {
         pub def proj(u: Injection.Universe[a]): Option[a]
     }
 
-    pub enum U {
-        case UV(JsonValue)
-        case UA(JsonArray)
-        case UO(JsonObject)
-    }
-
-    instance Injection[JsonValue] {
-        type Universe[JsonValue] = U
-        
-        pub def inj(a: JsonValue): U = U.UV(a)
-
-        pub def proj(u: U): Option[JsonValue] = match u {
-            case U.UV(x) => Some(x)
-            case _       => None
-
-        }
-    }
-
-
-    instance Injection[JsonArray] {
-        type Universe[JsonArray] = U
-        
-        pub def inj(a: JsonArray): U = U.UA(a)
-        pub def proj(u: U): Option[JsonArray] = match u {
-            case U.UA(x) => Some(x)
-            case _       => None
-
-        }
-    }
-
-    instance Injection[JsonObject] {
-        type Universe[JsonObject] = U
-        
-        pub def inj(a: JsonObject): U = U.UO(a)
-        pub def proj(u: U): Option[JsonObject] = match u {
-            case U.UO(x) => Some(x)
-            case _       => None
-
-        }
-    }
 
     pub def injectT(): Transform[cx, a, u] with Injection[a] where Injection.Universe[a] ~ u = 
         KIR.Base.arrT(Injection.inj)
