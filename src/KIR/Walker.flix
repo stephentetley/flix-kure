@@ -84,7 +84,8 @@ mod KIR.Walker {
             }
         ) 
 
-    pub def jsonArrayT(t: Transform[cx, JsonValue, a], f: List[a] -> b  \ ef): Transform[cx, JsonValue, b] \ ef = 
+
+    def jsonArrayT(t: Transform[cx, JsonValue, a], f: (List[a]) -> b \ ef): Transform[cx, JsonValue, b] \ ef = 
         KIR.Base.transform((cx, a) -> 
             match InteropJson.JsonValue.getJsonArray(a) {
                 case Some(arr) => { 
@@ -96,19 +97,55 @@ mod KIR.Walker {
             }
         )   
 
-    pub def jsonArrayAllR(t: Rewrite[cx, JsonValue]): Rewrite[cx, JsonValue] = ???
 
-    pub def jsonArrayAnyR(t: Rewrite[cx, JsonValue]): Rewrite[cx, JsonValue] = ???
+    pub def jsonArrayAllR(t: Rewrite[cx, JsonValue]): Rewrite[cx, JsonValue] = 
+        jsonArrayT(t, InteropJson.JsonArray.fromList >> InteropJson.JsonArray.toJsonValue)
 
-    pub def jsonArrayOneR(t: Rewrite[cx, JsonValue]): Rewrite[cx, JsonValue] = ???
+    pub def jsonArrayAnyR(r1: Rewrite[cx, JsonValue]): Rewrite[cx, JsonValue] = 
+        KIR.Base.transform((cx, a) -> 
+            match InteropJson.JsonValue.getJsonArray(a) {
+                case Some(arr) => { 
+                    let xs = InteropJson.JsonArray.toList(arr);
+                    let ys: Answer[List[JsonValue]] = KIR.Base.applyT(KIR.Base.anyRList(r1), cx, xs);
+                    Functor.map(InteropJson.JsonArray.fromList >> InteropJson.JsonArray.toJsonValue, ys)
+                }
+                case None      => Err("not a JsonArray")
+            }
+        ) 
 
+    pub def jsonArrayOneR(r1: Rewrite[cx, JsonValue]): Rewrite[cx, JsonValue] =
+        KIR.Base.transform((cx, a) -> 
+            match InteropJson.JsonValue.getJsonArray(a) {
+                case Some(arr) => { 
+                    let xs = InteropJson.JsonArray.toList(arr);
+                    let ys: Answer[List[JsonValue]] = KIR.Base.applyT(KIR.Base.oneRList(r1), cx, xs);
+                    Functor.map(InteropJson.JsonArray.fromList >> InteropJson.JsonArray.toJsonValue, ys)
+                }
+                case None      => Err("not a JsonArray")
+            }
+        )
+
+        
     pub enum JsonObjectRow{
         case JsonObjectRow(String, JsonValue)
     }
 
-    pub def jsonObjectT(t: Transform[cx, JsonObjectRow, a], f: List[a] -> b  \ ef): Transform[cx, JsonValue, b] = ???
+    pub def jsonObjectT(t: Transform[cx, JsonObjectRow, a], f: List[a] -> b  \ ef): Transform[cx, JsonValue, b] \ ef =
+        KIR.Base.transform((cx, a) -> 
+            match InteropJson.JsonValue.getJsonObject(a) {
+                case Some(obj) => { 
+                    // TODO - get this down to one traversal...
+                    let xs = InteropJson.JsonObject.toList(obj) |> List.map(match (x, y) -> JsonObjectRow.JsonObjectRow(x, y));
+                    let ys: Answer[List[a]] = Traversable.traverse(x1 -> KIR.Base.applyT(t, cx, x1), xs);
+                    Result.map(f, ys)
+                }
+                case None      => Err("not a JsonObject")
+            }
+        ) 
 
-    pub def jsonObjectAllR(t: Rewrite[cx, JsonObjectRow]): Rewrite[cx, JsonValue] = ???
+    // TODO - to many traversals! ...
+    pub def jsonObjectAllR(t: Rewrite[cx, JsonObjectRow]): Rewrite[cx, JsonValue] =
+        jsonObjectT(t, List.map(match (JsonObjectRow.JsonObjectRow(k, v)) -> (k, v)) >>  List.toMap >> InteropJson.JsonObject.fromMap >> InteropJson.JsonObject.toJsonValue)
 
     pub def jsonObjectAnyR(t: Rewrite[cx, JsonObjectRow]): Rewrite[cx, JsonValue] = ???
 
