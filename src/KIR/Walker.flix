@@ -17,7 +17,7 @@
 
 mod KIR.Walker {
 
-    use KIR.Base.{Transform, Rewrite}
+    use KIR.Base.{Transform, Rewrite, Answer}
 
     use InteropJson.JsonValue
     use InteropJson.JsonArray
@@ -72,7 +72,7 @@ mod KIR.Walker {
         KIR.Base.contextFreeT(a -> 
             match InteropJson.JsonValue.getString(a) {
                 case Some(s) => Functor.map(f, Ok(s))
-                case None    => Err("not a JsomnNull")
+                case None    => Err("not a JsonString")
             }
         )     
 
@@ -80,9 +80,39 @@ mod KIR.Walker {
         KIR.Base.contextFreeT(a -> 
             match InteropJson.JsonValue.getBigDecimal(a) {
                 case Some(s) => Functor.map(f, Ok(s))
-                case None    => Err("not a JsomnNull")
+                case None    => Err("not a JsonNumber")
+            }
+        ) 
+
+    pub def jsonArrayT(t: Transform[cx, JsonValue, a], f: List[a] -> b  \ ef): Transform[cx, JsonValue, b] \ ef = 
+        KIR.Base.transform((cx, a) -> 
+            match InteropJson.JsonValue.getJsonArray(a) {
+                case Some(arr) => { 
+                    let xs = InteropJson.JsonArray.toList(arr);
+                    let ys: Answer[List[a]] = Traversable.traverse(x1 -> KIR.Base.applyT(t, cx, x1), xs);
+                    Result.map(f, ys)
+                }
+                case None      => Err("not a JsonArray")
             }
         )   
+
+    pub def jsonArrayAllR(t: Rewrite[cx, JsonValue]): Rewrite[cx, JsonValue] = ???
+
+    pub def jsonArrayAnyR(t: Rewrite[cx, JsonValue]): Rewrite[cx, JsonValue] = ???
+
+    pub def jsonArrayOneR(t: Rewrite[cx, JsonValue]): Rewrite[cx, JsonValue] = ???
+
+    pub enum JsonObjectRow{
+        case JsonObjectRow(String, JsonValue)
+    }
+
+    pub def jsonObjectT(t: Transform[cx, JsonObjectRow, a], f: List[a] -> b  \ ef): Transform[cx, JsonValue, b] = ???
+
+    pub def jsonObjectAllR(t: Rewrite[cx, JsonObjectRow]): Rewrite[cx, JsonValue] = ???
+
+    pub def jsonObjectAnyR(t: Rewrite[cx, JsonObjectRow]): Rewrite[cx, JsonValue] = ???
+
+    pub def jsonObjectOneR(t: Rewrite[cx, JsonObjectRow]): Rewrite[cx, JsonValue] = ???
 
 
 }
