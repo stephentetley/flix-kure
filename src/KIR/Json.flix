@@ -22,6 +22,8 @@ mod KIR.Json {
     use InteropJson.JsonArray
     use InteropJson.JsonObject
     
+    use InteropJson.JsonValue.ValueView.JsonValueView
+
     use KIR.Base.{Transform, Rewrite, Answer}
     use KIR.Base.{transform, rewrite, applyR}
     use KIR.Walker.{Walker}
@@ -81,47 +83,41 @@ mod KIR.Json {
 
     pub def jsonAllR(r1: Rewrite[cx, JsonValue]): Rewrite[cx, JsonValue] = 
         rewrite((cx, v) -> 
-            match InteropJson.JsonValue.getJsonArray(v) {
-                case Some(arr) => {
+            match InteropJson.JsonValue.ValueView.viewJsonValue(v) {
+                case JsonValueView.JsArray(arr)     => {
                     let ma: Answer[JsonArray] = applyR(jsonArrayAllR(r1), cx, arr); 
                     Functor.map(InteropJson.JsonArray.toJsonValue, ma)
                 }
-                case None => match InteropJson.JsonValue.getJsonObject(v) {
-                    case Some(obj) => {
-                        let r1kv = rewrite((cx1, kv) -> { 
-                            let JsonObjectRow.JsonObjectRow(k1, v1) = kv; 
-                            let kids: Answer[JsonValue] = applyR(r1, cx1, v1);
-                            Functor.map(JsonObjectRow.JsonObjectRow(k1), kids)
-                        });
-                        let ma: Answer[JsonObject] = applyR(jsonObjectAllR(r1kv), cx, obj); 
-                        Functor.map(InteropJson.JsonObject.toJsonValue, ma)
-                        
-                    }
-                    case None => Ok(v)
+                case JsonValueView.JsObject(obj)    => { 
+                    let r1kv = rewrite((cx1, kv) -> { 
+                        let JsonObjectRow.JsonObjectRow(k1, v1) = kv; 
+                        let kids: Answer[JsonValue] = applyR(r1, cx1, v1);
+                        Functor.map(JsonObjectRow.JsonObjectRow(k1), kids)
+                    });
+                    let ma: Answer[JsonObject] = applyR(jsonObjectAllR(r1kv), cx, obj); 
+                    Functor.map(InteropJson.JsonObject.toJsonValue, ma)
                 }
+                case _                              => Ok(v)
             }
         )
 
     pub def jsonAnyR(r1: Rewrite[cx, JsonValue]): Rewrite[cx, JsonValue] = 
         rewrite((cx, v) -> 
-            match InteropJson.JsonValue.getJsonArray(v) {
-                case Some(arr) => {
+            match InteropJson.JsonValue.ValueView.viewJsonValue(v) {
+                case JsonValueView.JsArray(arr)     => {
                     let ma: Answer[JsonArray] = applyR(jsonArrayAnyR(r1), cx, arr); 
                     Functor.map(InteropJson.JsonArray.toJsonValue, ma)
                 }
-                case None => match InteropJson.JsonValue.getJsonObject(v) {
-                    case Some(obj) => {
-                        let r1kv = rewrite((cx1, kv) -> { 
-                            let JsonObjectRow.JsonObjectRow(k1, v1) = kv; 
-                            let kids: Answer[JsonValue] = applyR(r1, cx1, v1);
-                            Functor.map(JsonObjectRow.JsonObjectRow(k1), kids)
-                        });
-                        let ma: Answer[JsonObject] = applyR(jsonObjectAnyR(r1kv), cx, obj); 
-                        Functor.map(InteropJson.JsonObject.toJsonValue, ma)
-                        
-                    }
-                    case None => Ok(v)
+                case JsonValueView.JsObject(obj)    => {
+                    let r1kv = rewrite((cx1, kv) -> { 
+                        let JsonObjectRow.JsonObjectRow(k1, v1) = kv; 
+                        let kids: Answer[JsonValue] = applyR(r1, cx1, v1);
+                        Functor.map(JsonObjectRow.JsonObjectRow(k1), kids)
+                    });
+                    let ma: Answer[JsonObject] = applyR(jsonObjectAnyR(r1kv), cx, obj); 
+                    Functor.map(InteropJson.JsonObject.toJsonValue, ma)
                 }
+                case _                              => Ok(v)
             }
         )
 
