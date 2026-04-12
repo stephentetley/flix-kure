@@ -336,6 +336,22 @@ mod KIR.Congruence {
             if (acc) Ok(ys) else Err("oneRTraversable failed")
         )
 
+    // Get the first success (no monoid required)
+    pub def oneTFoldable(t1: Transform[cx, kid, b]): Transform[cx, t[kid], b] \ Foldable.Aef[t] with Traversable[t] = 
+        transform((cx, xs) -> 
+            def step(acc, x) = match acc {
+                case None => 
+                    match applyT(t1, cx, x) {
+                        case Err(_) => None
+                        case Ok(x1) => Some(x1)
+                    }
+                case _   => acc
+            };
+            Foldable.foldLeft(step, None, xs) 
+                |> Option.toOk("oneTTraversable failed")
+        )
+
+
     ///////////////////////////////////////////////////////////////////////////
     // Map
     

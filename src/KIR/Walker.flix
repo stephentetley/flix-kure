@@ -23,12 +23,18 @@ mod KIR.Walker {
     use InteropJson.JsonArray
     use InteropJson.JsonObject
 
-    pub trait Walker[a] {
-        type Context[a]: Type
+    pub trait Walker[u] {
+        type Context[u]: Type
 
-        pub def allR(t: Rewrite[Walker.Context[a], a]): Rewrite[Walker.Context[a], a] 
+        pub def allR(t: Rewrite[Walker.Context[u], u]): Rewrite[Walker.Context[u], u] 
 
-        pub def anyR(t: Rewrite[Walker.Context[a], a]): Rewrite[Walker.Context[a], a]
+        pub def anyR(t: Rewrite[Walker.Context[u], u]): Rewrite[Walker.Context[u], u]
+        
+        pub def oneR(t: Rewrite[Walker.Context[u], u]): Rewrite[Walker.Context[u], u]
+
+        // pub def allT(t: Transform[Walker.Context[u], u, b]): Transform[Walker.Context[u], u, b] with Monoid[b]
+
+        pub def oneT(t: Transform[Walker.Context[u], u, b]): Transform[Walker.Context[u], u, b]
         
     }
 
