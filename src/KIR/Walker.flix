@@ -106,7 +106,7 @@ mod KIR.Walker {
             match InteropJson.JsonValue.getJsonArray(a) {
                 case Some(arr) => { 
                     let xs = InteropJson.JsonArray.toList(arr);
-                    let ys: Answer[List[JsonValue]] = KIR.Base.applyT(KIR.Base.anyRList(r1), cx, xs);
+                    let ys: Answer[List[JsonValue]] = KIR.Base.applyT(KIR.Congruence.anyRList(r1), cx, xs);
                     Functor.map(InteropJson.JsonArray.fromList >> InteropJson.JsonArray.toJsonValue, ys)
                 }
                 case None      => Err("not a JsonArray")
@@ -118,14 +118,14 @@ mod KIR.Walker {
             match InteropJson.JsonValue.getJsonArray(a) {
                 case Some(arr) => { 
                     let xs = InteropJson.JsonArray.toList(arr);
-                    let ys: Answer[List[JsonValue]] = KIR.Base.applyT(KIR.Base.oneRList(r1), cx, xs);
+                    let ys: Answer[List[JsonValue]] = KIR.Base.applyT(KIR.Congruence.oneRList(r1), cx, xs);
                     Functor.map(InteropJson.JsonArray.fromList >> InteropJson.JsonArray.toJsonValue, ys)
                 }
                 case None      => Err("not a JsonArray")
             }
         )
 
-        
+
     pub enum JsonObjectRow{
         case JsonObjectRow(String, JsonValue)
     }
@@ -143,7 +143,7 @@ mod KIR.Walker {
             }
         ) 
 
-    // TODO - to many traversals! ...
+    // TODO - too many traversals! ...
     pub def jsonObjectAllR(t: Rewrite[cx, JsonObjectRow]): Rewrite[cx, JsonValue] =
         jsonObjectT(t, List.map(match (JsonObjectRow.JsonObjectRow(k, v)) -> (k, v)) >>  List.toMap >> InteropJson.JsonObject.fromMap >> InteropJson.JsonObject.toJsonValue)
 
