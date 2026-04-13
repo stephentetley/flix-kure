@@ -20,7 +20,117 @@ mod KIR.Congruence {
     use KIR.Base.{Transform, Rewrite}
     use KIR.Base.{transform, rewrite, applyR, applyT}
 
-    // Ugh ... In Haskell the machinery for AnyR amd OneR changes the monad but we have fixed it to Answer
+    // In Haskell the machinery for AnyR amd OneR changes the monad 
+    // but we have fixed it to Answer, so we need our own solution
+    // to simplify writing congruence combinators
+
+
+    ///////////////////////////////////////////////////////////////////////////
+    // AllR
+
+    // All must succeed
+    pub def allR2(r1: Rewrite[cx, a], r2: Rewrite[cx, b]): Rewrite[cx, (a, b)] = 
+        rewrite((cx, ab) -> 
+            let (a, b) = ab;
+            let ans = forM (
+                a1 <- applyR(r1, cx, a);
+                b1 <- applyR(r2, cx, b)
+            ) yield (a1, b1);
+            Result.mapErr(_ -> "anyR2 failed", ans)
+        )
+
+    pub def allR3(r1: Rewrite[cx, a], r2: Rewrite[cx, b],
+                    r3: Rewrite[cx, c]): Rewrite[cx, (a, b, c)] = 
+        rewrite((cx, abc) -> 
+            let (a, b, c) = abc;
+            let ans = forM (
+                a1 <- applyR(r1, cx, a);
+                b1 <- applyR(r2, cx, b);
+                c1 <- applyR(r3, cx, c)
+            ) yield (a1, b1, c1);
+            Result.mapErr(_ -> "anyR3 failed", ans)
+        )
+
+    pub def allR4(r1: Rewrite[cx, a], r2: Rewrite[cx, b],
+                    r3: Rewrite[cx, c], r4: Rewrite[cx, d]): Rewrite[cx, (a, b, c, d)] = 
+        rewrite((cx, abcd) -> 
+            let (a, b, c, d) = abcd;
+            let ans = forM (
+                a1 <- applyR(r1, cx, a);
+                b1 <- applyR(r2, cx, b);
+                c1 <- applyR(r3, cx, c);
+                d1 <- applyR(r4, cx, d)
+            ) yield (a1, b1, c1, d1);
+            Result.mapErr(_ -> "anyR4 failed", ans)
+        )
+
+    pub def allR5(r1: Rewrite[cx, a], r2: Rewrite[cx, b],
+                    r3: Rewrite[cx, c], r4: Rewrite[cx, d],
+                    r5: Rewrite[cx, e]): Rewrite[cx, (a, b, c, d, e)] = 
+        rewrite((cx, abcde) -> 
+            let (a, b, c, d, e) = abcde;
+            let ans = forM (
+                a1 <- applyR(r1, cx, a);
+                b1 <- applyR(r2, cx, b);
+                c1 <- applyR(r3, cx, c);
+                d1 <- applyR(r4, cx, d);
+                e1 <- applyR(r5, cx, e)
+            ) yield (a1, b1, c1, d1, e1);
+            Result.mapErr(_ -> "anyR5 failed", ans)
+        )
+
+    pub def allR6(r1: Rewrite[cx, a], r2: Rewrite[cx, b],
+                    r3: Rewrite[cx, c], r4: Rewrite[cx, d],
+                    r5: Rewrite[cx, e], r6: Rewrite[cx, f]): Rewrite[cx, (a, b, c, d, e, f)] = 
+        rewrite((cx, abcdef) -> 
+            let (a, b, c, d, e, f) = abcdef;
+            let ans = forM (
+                a1 <- applyR(r1, cx, a);
+                b1 <- applyR(r2, cx, b);
+                c1 <- applyR(r3, cx, c);
+                d1 <- applyR(r4, cx, d);
+                e1 <- applyR(r5, cx, e);
+                f1 <- applyR(r6, cx, f)
+            ) yield (a1, b1, c1, d1, e1, f1);
+            Result.mapErr(_ -> "anyR6 failed", ans)
+        )
+
+    pub def allR7(r1: Rewrite[cx, a], r2: Rewrite[cx, b],
+                    r3: Rewrite[cx, c], r4: Rewrite[cx, d],
+                    r5: Rewrite[cx, e], r6: Rewrite[cx, f], 
+                    r7: Rewrite[cx, g]): Rewrite[cx, (a, b, c, d, e, f, g)] = 
+        rewrite((cx, abcdefg) -> 
+            let (a, b, c, d, e, f, g) = abcdefg;
+            let ans = forM (
+                a1 <- applyR(r1, cx, a);
+                b1 <- applyR(r2, cx, b);
+                c1 <- applyR(r3, cx, c);
+                d1 <- applyR(r4, cx, d);
+                e1 <- applyR(r5, cx, e);
+                f1 <- applyR(r6, cx, f);
+                g1 <- applyR(r7, cx, g)
+            ) yield (a1, b1, c1, d1, e1, f1, g1);
+            Result.mapErr(_ -> "anyR7 failed", ans)
+        )
+
+    pub def allR8(r1: Rewrite[cx, a], r2: Rewrite[cx, b],
+                    r3: Rewrite[cx, c], r4: Rewrite[cx, d],
+                    r5: Rewrite[cx, e], r6: Rewrite[cx, f], 
+                    r7: Rewrite[cx, g], r8: Rewrite[cx, h]): Rewrite[cx, (a, b, c, d, e, f, g, h)] = 
+        rewrite((cx, abcdefgh) -> 
+            let (a, b, c, d, e, f, g, h) = abcdefgh;
+            let ans = forM (
+                a1 <- applyR(r1, cx, a);
+                b1 <- applyR(r2, cx, b);
+                c1 <- applyR(r3, cx, c);
+                d1 <- applyR(r4, cx, d);
+                e1 <- applyR(r5, cx, e);
+                f1 <- applyR(r6, cx, f);
+                g1 <- applyR(r7, cx, g);
+                h1 <- applyR(r8, cx, h)
+            ) yield (a1, b1, c1, d1, e1, f1, g1, h1);
+            Result.mapErr(_ -> "anyR8 failed", ans)
+        )
 
     ///////////////////////////////////////////////////////////////////////////
     // AnyR
@@ -382,30 +492,28 @@ mod KIR.Congruence {
 
 
 
-    // Rewrite only values, keys stay the same
-    pub def anyR_Map(r1: Rewrite[cx, kid]): Rewrite[cx, Map[k, kid]] with Order[k] = 
+    // Rewrite keys and values
+    pub def anyR_Map(r1: Rewrite[cx, (k, v)]): Rewrite[cx, Map[k, v]] with Order[k] = 
         rewrite((cx, mp) -> 
             def step(accB, kv) = {
-                let (k, v) = kv;
-                match applyR(r1, cx, v) {
-                    case Err(_) => (accB, (k, v))
-                    case Ok(v1) => (true, (k, v1))
+                match applyR(r1, cx, kv) {
+                    case Err(_) => (accB, kv)
+                    case Ok(kv1) => (true, kv1)
                 }
             };
             let (acc, ys) = Map.toList(mp) |> Traversable.mapAccumLeft(step, false);
             if (acc) Ok(List.toMap(ys)) else Err("anyRMap failed")
         )
 
-    pub def oneR_Map(r1: Rewrite[cx, kid]): Rewrite[cx, Map[k, kid]] with Order[k] = 
+    pub def oneR_Map(r1: Rewrite[cx, (k, v)]): Rewrite[cx, Map[k, v]] with Order[k] = 
         rewrite((cx, mp) -> 
             def step(accB, kv) = {
                 if (accB) 
                     (true, kv)
                 else {
-                    let (k, v) = kv;
-                    match applyR(r1, cx, v) {
-                        case Err(_) => (accB, (k, v))
-                        case Ok(v1) => (true, (k, v1))
+                    match applyR(r1, cx, kv) {
+                        case Err(_) => (accB, kv)
+                        case Ok(kv1) => (true, kv1)
                     }
                 }
             };

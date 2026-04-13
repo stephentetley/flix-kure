@@ -76,6 +76,11 @@ mod KIR.Json {
         case JsonObjectRow(String, JsonValue)
     }
 
+    // def jsonObjectRowWrapper(): Wrapper[JsonObjectRow, (String, JsonValue)] = 
+    //     def wrapF(kv) = match kv { case (k, v) => JsonObjectRow.JsonObjectRow(k, v) };
+    //     def unwrapF(w) = { let JsonObjectRow.JsonObjectRow(k, v) = w; (k, v) };
+    //     { wrap = wrapF, unwrap = unwrapF}
+
 
     pub def jsonAllR(r1: Rewrite[cx, JsonValue]): Rewrite[cx, JsonValue] = 
         rewrite((cx, v) -> 
@@ -264,10 +269,12 @@ mod KIR.Json {
     ///////////////////////////////////////////////////////////////////////////
     // Object (map) 
 
-    pub def jsonObjectT(t: Transform[cx, JsonObjectRow, a], f: List[a] -> b  \ ef): Transform[cx, JsonObject, b] \ ef =
+    // jsonObjectRowWrapper
+
+    pub def jsonObjectT(t1: Transform[cx, JsonObjectRow, a], f: List[a] -> b  \ ef): Transform[cx, JsonObject, b] \ ef =
         KIR.Base.transform((cx, a) -> {
             let xs = InteropJson.JsonObject.toList(a) |> List.map(match (x, y) -> JsonObjectRow.JsonObjectRow(x, y));
-            let ys: Answer[List[a]] = Traversable.traverse(x1 -> KIR.Base.applyT(t, cx, x1), xs);
+            let ys: Answer[List[a]] = Traversable.traverse(x1 -> KIR.Base.applyT(t1, cx, x1), xs);
             Result.map(f, ys)
         }) 
 
@@ -286,7 +293,7 @@ mod KIR.Json {
         KIR.Base.transform((cx, a) -> {
             let t1kv = transform((cx1, a1) -> {
                 let (k, v) = a1;
-                applyT(t1, cx1, JsonObjectRow.JsonObjectRow(k, v))
+                applyT(t1, cx1, JsonObjectRow.JsonObjectRow(k, v))                      
             });
             let xs = InteropJson.JsonObject.toList(a);
             applyT(KIR.Congruence.allT_Foldable(t1kv), cx, xs)
