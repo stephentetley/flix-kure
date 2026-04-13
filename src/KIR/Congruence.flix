@@ -36,7 +36,7 @@ mod KIR.Congruence {
 
 
     // At least one success - try all
-    pub def makeAnyR2(r1: Rewrite[cx, a], r2: Rewrite[cx, b]): Rewrite[cx, (a, b)] = 
+    pub def anyR2(r1: Rewrite[cx, a], r2: Rewrite[cx, b]): Rewrite[cx, (a, b)] = 
         rewrite((cx, ab) -> 
             let (a, b) = ab;
             let ans = forM (
@@ -50,8 +50,8 @@ mod KIR.Congruence {
         )
 
     // At least one success - try all
-    pub def makeAnyR3(r1: Rewrite[cx, a], r2: Rewrite[cx, b], 
-                        r3: Rewrite[cx, c]): Rewrite[cx, (a, b, c)] = 
+    pub def anyR3(r1: Rewrite[cx, a], r2: Rewrite[cx, b], 
+                    r3: Rewrite[cx, c]): Rewrite[cx, (a, b, c)] = 
         rewrite((cx, abc) -> 
             let (a, b, c) = abc;
             let ans = forM (
@@ -65,8 +65,8 @@ mod KIR.Congruence {
             }
         )
     
-    pub def makeAnyR4(r1: Rewrite[cx, a], r2: Rewrite[cx, b], 
-                        r3: Rewrite[cx, c], r4: Rewrite[cx, d]): Rewrite[cx, (a, b, c, d)] = 
+    pub def anyR4(r1: Rewrite[cx, a], r2: Rewrite[cx, b], 
+                    r3: Rewrite[cx, c], r4: Rewrite[cx, d]): Rewrite[cx, (a, b, c, d)] = 
         rewrite((cx, abcd) -> 
             let (a, b, c, d) = abcd;
             let ans = forM (
@@ -81,9 +81,9 @@ mod KIR.Congruence {
             }
         )
 
-    pub def makeAnyR5(r1: Rewrite[cx, a], r2: Rewrite[cx, b], 
-                        r3: Rewrite[cx, c], r4: Rewrite[cx, d], 
-                        r5: Rewrite[cx, e]): Rewrite[cx, (a, b, c, d, e)] = 
+    pub def anyR5(r1: Rewrite[cx, a], r2: Rewrite[cx, b], 
+                    r3: Rewrite[cx, c], r4: Rewrite[cx, d], 
+                    r5: Rewrite[cx, e]): Rewrite[cx, (a, b, c, d, e)] = 
         rewrite((cx, abcde) -> 
             let (a, b, c, d, e) = abcde;
             let ans = forM (
@@ -99,9 +99,9 @@ mod KIR.Congruence {
             }
         )
 
-    pub def makeAnyR6(r1: Rewrite[cx, a], r2: Rewrite[cx, b], 
-                        r3: Rewrite[cx, c], r4: Rewrite[cx, d], 
-                        r5: Rewrite[cx, e], r6: Rewrite[cx, f]): Rewrite[cx, (a, b, c, d, e, f)] = 
+    pub def anyR6(r1: Rewrite[cx, a], r2: Rewrite[cx, b], 
+                    r3: Rewrite[cx, c], r4: Rewrite[cx, d], 
+                    r5: Rewrite[cx, e], r6: Rewrite[cx, f]): Rewrite[cx, (a, b, c, d, e, f)] = 
         rewrite((cx, abcdef) -> 
             let (a, b, c, d, e, f) = abcdef;
             let ans = forM (
@@ -118,10 +118,10 @@ mod KIR.Congruence {
             }
         )
 
-    pub def makeAnyR7(r1: Rewrite[cx, a], r2: Rewrite[cx, b], 
-                        r3: Rewrite[cx, c], r4: Rewrite[cx, d], 
-                        r5: Rewrite[cx, e], r6: Rewrite[cx, f],
-                        r7: Rewrite[cx, g]): Rewrite[cx, (a, b, c, d, e, f, g)] = 
+    pub def anyR7(r1: Rewrite[cx, a], r2: Rewrite[cx, b], 
+                    r3: Rewrite[cx, c], r4: Rewrite[cx, d], 
+                    r5: Rewrite[cx, e], r6: Rewrite[cx, f],
+                    r7: Rewrite[cx, g]): Rewrite[cx, (a, b, c, d, e, f, g)] = 
         rewrite((cx, abcdefg) -> 
             let (a, b, c, d, e, f, g) = abcdefg;
             let ans = forM (
@@ -139,10 +139,10 @@ mod KIR.Congruence {
             }
         )
 
-    pub def makeAnyR8(r1: Rewrite[cx, a], r2: Rewrite[cx, b], 
-                        r3: Rewrite[cx, c], r4: Rewrite[cx, d], 
-                        r5: Rewrite[cx, e], r6: Rewrite[cx, f],
-                        r7: Rewrite[cx, g], r8: Rewrite[cx, h]): Rewrite[cx, (a, b, c, d, e, f, g, h)] = 
+    pub def anyR8(r1: Rewrite[cx, a], r2: Rewrite[cx, b], 
+                    r3: Rewrite[cx, c], r4: Rewrite[cx, d], 
+                    r5: Rewrite[cx, e], r6: Rewrite[cx, f],
+                    r7: Rewrite[cx, g], r8: Rewrite[cx, h]): Rewrite[cx, (a, b, c, d, e, f, g, h)] = 
         rewrite((cx, abcdefgh) -> 
             let (a, b, c, d, e, f, g, h) = abcdefgh;
             let ans = forM (
@@ -179,7 +179,7 @@ mod KIR.Congruence {
         )
 
 
-    pub def makeOneR2(r1: Rewrite[cx, a], r2: Rewrite[cx, b]): Rewrite[cx, (a, b)] = 
+    pub def oneR2(r1: Rewrite[cx, a], r2: Rewrite[cx, b]): Rewrite[cx, (a, b)] = 
         rewrite((cx, ab) -> 
             let (a, b) = ab;
             let ans = forM (
@@ -196,8 +196,8 @@ mod KIR.Congruence {
 
 
 
-    pub def makeOneR3(r1: Rewrite[cx, a], r2: Rewrite[cx, b], 
-                        r3: Rewrite[cx, c]): Rewrite[cx, (a, b, c)] = 
+    pub def oneR3(r1: Rewrite[cx, a], r2: Rewrite[cx, b], 
+                    r3: Rewrite[cx, c]): Rewrite[cx, (a, b, c)] = 
         rewrite((cx, abc) -> 
             let (a, b, c) = abc;
             let ans = forM (
@@ -211,8 +211,8 @@ mod KIR.Congruence {
             }
         )
 
-    pub def makeOneR4(r1: Rewrite[cx, a], r2: Rewrite[cx, b], 
-                        r3: Rewrite[cx, c], r4: Rewrite[cx, d]): Rewrite[cx, (a, b, c, d)] = 
+    pub def oneR4(r1: Rewrite[cx, a], r2: Rewrite[cx, b], 
+                    r3: Rewrite[cx, c], r4: Rewrite[cx, d]): Rewrite[cx, (a, b, c, d)] = 
         rewrite((cx, abcd) -> 
             let (a, b, c, d) = abcd;
             let ans = forM (
@@ -227,9 +227,9 @@ mod KIR.Congruence {
             }
         )
 
-    pub def makeOneR5(r1: Rewrite[cx, a], r2: Rewrite[cx, b], 
-                        r3: Rewrite[cx, c], r4: Rewrite[cx, d],
-                        r5: Rewrite[cx, e]): Rewrite[cx, (a, b, c, d, e)] = 
+    pub def oneR5(r1: Rewrite[cx, a], r2: Rewrite[cx, b], 
+                    r3: Rewrite[cx, c], r4: Rewrite[cx, d],
+                    r5: Rewrite[cx, e]): Rewrite[cx, (a, b, c, d, e)] = 
         rewrite((cx, abcde) -> 
             let (a, b, c, d, e) = abcde;
             let ans = forM (
@@ -245,9 +245,9 @@ mod KIR.Congruence {
             }
         )
 
-    pub def makeOneR6(r1: Rewrite[cx, a], r2: Rewrite[cx, b], 
-                        r3: Rewrite[cx, c], r4: Rewrite[cx, d],
-                        r5: Rewrite[cx, e], r6: Rewrite[cx, f]): Rewrite[cx, (a, b, c, d, e, f)] = 
+    pub def oneR6(r1: Rewrite[cx, a], r2: Rewrite[cx, b], 
+                    r3: Rewrite[cx, c], r4: Rewrite[cx, d],
+                    r5: Rewrite[cx, e], r6: Rewrite[cx, f]): Rewrite[cx, (a, b, c, d, e, f)] = 
         rewrite((cx, abcdef) -> 
             let (a, b, c, d, e, f) = abcdef;
             let ans = forM (
@@ -264,10 +264,10 @@ mod KIR.Congruence {
             }
         )
 
-    pub def makeOneR7(r1: Rewrite[cx, a], r2: Rewrite[cx, b], 
-                        r3: Rewrite[cx, c], r4: Rewrite[cx, d],
-                        r5: Rewrite[cx, e], r6: Rewrite[cx, f],
-                        r7: Rewrite[cx, g]): Rewrite[cx, (a, b, c, d, e, f, g)] = 
+    pub def oneR7(r1: Rewrite[cx, a], r2: Rewrite[cx, b], 
+                    r3: Rewrite[cx, c], r4: Rewrite[cx, d],
+                    r5: Rewrite[cx, e], r6: Rewrite[cx, f],
+                    r7: Rewrite[cx, g]): Rewrite[cx, (a, b, c, d, e, f, g)] = 
         rewrite((cx, abcdefg) -> 
             let (a, b, c, d, e, f, g) = abcdefg;
             let ans = forM (
@@ -285,10 +285,10 @@ mod KIR.Congruence {
             }
         )
 
-    pub def makeOneR8(r1: Rewrite[cx, a], r2: Rewrite[cx, b], 
-                        r3: Rewrite[cx, c], r4: Rewrite[cx, d],
-                        r5: Rewrite[cx, e], r6: Rewrite[cx, f],
-                        r7: Rewrite[cx, g], r8: Rewrite[cx, h]): Rewrite[cx, (a, b, c, d, e, f, g, h)] = 
+    pub def oneR8(r1: Rewrite[cx, a], r2: Rewrite[cx, b], 
+                    r3: Rewrite[cx, c], r4: Rewrite[cx, d],
+                     r5: Rewrite[cx, e], r6: Rewrite[cx, f],
+                    r7: Rewrite[cx, g], r8: Rewrite[cx, h]): Rewrite[cx, (a, b, c, d, e, f, g, h)] = 
         rewrite((cx, abcdefgh) -> 
             let (a, b, c, d, e, f, g, h) = abcdefgh;
             let ans = forM (
@@ -309,7 +309,18 @@ mod KIR.Congruence {
 
     // List (Traversable)
 
-    pub def anyRTraversable(r1: Rewrite[cx, kid]): Rewrite[cx, t[kid]] \ Foldable.Aef[t] with Traversable[t] = 
+    pub def allR_Traversable(r1: Rewrite[cx, kid]): Rewrite[cx, t[kid]] \ Foldable.Aef[t] with Traversable[t] = 
+        rewrite((cx, xs) -> 
+            def step(accB, x) = 
+                match applyR(r1, cx, x) {
+                    case Err(_) => (false, x)
+                    case Ok(x1) => (accB, x1)
+                };
+            let (acc, ys) = Traversable.mapAccumLeft(step, true, xs);
+            if (acc) Ok(ys) else Err("allRTraversable failed")
+        )
+
+    pub def anyR_Traversable(r1: Rewrite[cx, kid]): Rewrite[cx, t[kid]] \ Foldable.Aef[t] with Traversable[t] = 
         rewrite((cx, xs) -> 
             def step(accB, x) = 
                 match applyR(r1, cx, x) {
@@ -320,7 +331,7 @@ mod KIR.Congruence {
             if (acc) Ok(ys) else Err("anyRTraversable failed")
         )
 
-    pub def oneRTraversable(r1: Rewrite[cx, kid]): Rewrite[cx, t[kid]] \ Foldable.Aef[t] with Traversable[t] = 
+    pub def oneR_Traversable(r1: Rewrite[cx, kid]): Rewrite[cx, t[kid]] \ Foldable.Aef[t] with Traversable[t] = 
         rewrite((cx, xs) -> 
             def step(accB, x) = {
                 if (accB) 
@@ -338,7 +349,7 @@ mod KIR.Congruence {
 
 
     // Combine all successes (monoid required)
-    pub def allTFoldable(t1: Transform[cx, kid, b]): Transform[cx, t[kid], b] \ Foldable.Aef[t] with Traversable[t], Monoid[b] = 
+    pub def allT_Foldable(t1: Transform[cx, kid, b]): Transform[cx, t[kid], b] \ Foldable.Aef[t] with Traversable[t], Monoid[b] = 
         transform((cx, xs) -> 
             def step(acc, x) = match acc {
                 case Ok(b) => applyT(t1, cx, x) |> Functor.map(Monoid.combine(b))
@@ -350,7 +361,7 @@ mod KIR.Congruence {
 
 
     // Get the first success (no monoid required)
-    pub def oneTFoldable(t1: Transform[cx, kid, b]): Transform[cx, t[kid], b] \ Foldable.Aef[t] with Traversable[t] = 
+    pub def oneT_Foldable(t1: Transform[cx, kid, b]): Transform[cx, t[kid], b] \ Foldable.Aef[t] with Traversable[t] = 
         transform((cx, xs) -> 
             def step(acc, x) = match acc {
                 case None => 
@@ -368,8 +379,11 @@ mod KIR.Congruence {
     ///////////////////////////////////////////////////////////////////////////
     // Map
     
+
+
+
     // Rewrite only values, keys stay the same
-    pub def anyRMap(r1: Rewrite[cx, kid]): Rewrite[cx, Map[k, kid]] with Order[k] = 
+    pub def anyR_Map(r1: Rewrite[cx, kid]): Rewrite[cx, Map[k, kid]] with Order[k] = 
         rewrite((cx, mp) -> 
             def step(accB, kv) = {
                 let (k, v) = kv;
@@ -382,7 +396,7 @@ mod KIR.Congruence {
             if (acc) Ok(List.toMap(ys)) else Err("anyRMap failed")
         )
 
-    pub def oneRMap(r1: Rewrite[cx, kid]): Rewrite[cx, Map[k, kid]] with Order[k] = 
+    pub def oneR_Map(r1: Rewrite[cx, kid]): Rewrite[cx, Map[k, kid]] with Order[k] = 
         rewrite((cx, mp) -> 
             def step(accB, kv) = {
                 if (accB) 

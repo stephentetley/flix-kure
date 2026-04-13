@@ -242,6 +242,36 @@ mod KIR.Base {
         acceptWithFailMsgR(p, "acceptR: predicate failed")
 
 
+    pub type alias Wrapper[w: Type, i: Type] = 
+        { wrap = i -> w
+        , unwrap = w -> i
+        }
+
+
+    pub def wrappedRewrite(wr: Wrapper[w, i], strategy: Rewrite[cx, i] -> Rewrite[cx, i],  r1: Rewrite[cx, w]): Rewrite[cx, w] = 
+            let wrapF = wr#wrap;
+            let unwrapF = wr#unwrap;
+            rewrite((cx, a) -> {
+                let a1 = unwrapF(a);
+                let rW: Rewrite[cx, i] = 
+                    rewrite((cx1, jv) -> {
+                        let ans = applyR(r1, cx1, wrapF(jv));
+                        Functor.map(unwrapF, ans)
+                    });
+                applyR(strategy(rW), cx, a1) |> Functor.map(wrapF)
+            })
+
+    pub def wrappedTransform(wr: Wrapper[w, i], strategy: Transform[cx, i, b] -> Transform[cx, i, b], t1: Transform[cx, w, b]): Transform[cx, w, b] =
+            let wrapF = wr#wrap;
+            let unwrapF = wr#unwrap;
+            transform((cx, a) -> {
+                let a1 = unwrapF(a);
+                let tW: Transform[cx, i, b] = 
+                    transform((cx1, jv) -> {
+                        applyT(t1, cx1, wrapF(jv))
+                    });
+                applyT(strategy(tW), cx, a1)
+            })
 
 
 }

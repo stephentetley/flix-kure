@@ -16,16 +16,18 @@
 
 
 mod KIR.Json {
+    use KIR.Json.XJsonValue
     
     
 
     use InteropJson.JsonValue
     use InteropJson.JsonArray
     use InteropJson.JsonObject
+    use InteropJson.JsonNumber
     
     use InteropJson.JsonValue.ValueView.JsonValueView
 
-    use KIR.Base.{Transform, Rewrite, Answer}
+    use KIR.Base.{Transform, Rewrite, Answer, Wrapper}
     use KIR.Base.{transform, rewrite, applyR, applyT}
     use KIR.Walker.{Walker}
 
@@ -38,74 +40,34 @@ mod KIR.Json {
     
     pub enum XJsonValue(JsonValue)
 
-    def unwrap(x: XJsonValue): JsonValue = 
-        let XJsonValue.XJsonValue(x1)  = x;
-        x1
-
-    def wrap(x: JsonValue): XJsonValue = 
-        XJsonValue.XJsonValue(x)
 
 
+
+    def xJsonValueWrapper(): Wrapper[XJsonValue, JsonValue] = 
+        def wrapF(i) = XJsonValue.XJsonValue(i);
+        def unwrapF(w) = { let XJsonValue.XJsonValue(i) = w; i };
+        { wrap = wrapF, unwrap = unwrapF}
 
 
     instance Walker[XJsonValue] {
         type Context[XJsonValue] = Unit
 
-        pub def allR(r: Rewrite[Unit, XJsonValue]): Rewrite[Unit, XJsonValue] = 
-            rewrite((cx, a) -> {
-                let a1 = unwrap(a);
-                let rW: Rewrite[Unit, JsonValue] = 
-                    rewrite((cx1, jv) -> {
-                        let ans = applyR(r, cx1, wrap(jv));
-                        Functor.map(unwrap, ans)
-                    });
-                applyR(jsonAllR(rW), cx, a1) |> Functor.map(wrap)
-            })
+        pub def allR(r1: Rewrite[Unit, XJsonValue]): Rewrite[Unit, XJsonValue] = 
+            KIR.Base.wrappedRewrite(xJsonValueWrapper(), jsonAllR, r1)
 
-        pub def anyR(r: Rewrite[Unit, XJsonValue]): Rewrite[Unit, XJsonValue] = 
-            rewrite((cx, a) -> {
-                let a1 = unwrap(a);
-                let rW: Rewrite[Unit, JsonValue] = 
-                    rewrite((cx1, jv) -> {
-                        let ans = applyR(r, cx1, wrap(jv));
-                        Functor.map(unwrap, ans)
-                    });
-                applyR(jsonAnyR(rW), cx, a1) |> Functor.map(wrap)
-            })
+        pub def anyR(r1: Rewrite[Unit, XJsonValue]): Rewrite[Unit, XJsonValue] = 
+            KIR.Base.wrappedRewrite(xJsonValueWrapper(), jsonAnyR, r1)
+            
+
+        pub def oneR(r1: Rewrite[Unit, XJsonValue]): Rewrite[Unit, XJsonValue] = 
+            KIR.Base.wrappedRewrite(xJsonValueWrapper(), jsonOneR, r1)
+            
+        pub def allT(t1: Transform[Unit, XJsonValue, b]): Transform[Unit, XJsonValue, b] with Monoid[b]=
+            KIR.Base.wrappedTransform(xJsonValueWrapper(), jsonAllT, t1)
 
 
-        pub def oneR(r: Rewrite[Unit, XJsonValue]): Rewrite[Unit, XJsonValue] = 
-            rewrite((cx, a) -> {
-                let a1 = unwrap(a);
-                let rW: Rewrite[Unit, JsonValue] = 
-                    rewrite((cx1, jv) -> {
-                        let ans = applyR(r, cx1, wrap(jv));
-                        Functor.map(unwrap, ans)
-                    });
-                applyR(jsonOneR(rW), cx, a1) |> Functor.map(wrap)
-            })
-
-        pub def allT(t: Transform[Unit, XJsonValue, b]): Transform[Unit, XJsonValue, b] with Monoid[b]=
-            transform((cx, a) -> {
-                let a1 = unwrap(a);
-                let tW: Transform[Unit, JsonValue, b] = 
-                    transform((cx1, jv) -> {
-                        applyT(t, cx1, wrap(jv))
-                    });
-                applyT(jsonAllT(tW), cx, a1)
-            })
-
-
-        pub def oneT(t: Transform[Unit, XJsonValue, b]): Transform[Unit, XJsonValue, b] =
-            transform((cx, a) -> {
-                let a1 = unwrap(a);
-                let tW: Transform[Unit, JsonValue, b] = 
-                    transform((cx1, jv) -> {
-                        applyT(t, cx1, wrap(jv))
-                    });
-                applyT(jsonOneT(tW), cx, a1)
-            })
-
+        pub def oneT(t1: Transform[Unit, XJsonValue, b]): Transform[Unit, XJsonValue, b] =
+            KIR.Base.wrappedTransform(xJsonValueWrapper(), jsonOneT, t1)
 
     }
 
@@ -249,14 +211,16 @@ mod KIR.Json {
             }
         )     
 
-    pub def jsonNumberT(f: BigDecimal -> b \ ef): Transform[cx, JsonValue, b] \ ef= 
+    pub def jsonNumberT(f: JsonNumber -> b \ ef): Transform[cx, JsonValue, b] \ ef= 
         KIR.Base.contextFreeT(a -> 
-            match InteropJson.JsonValue.getBigDecimal(a) {
+            match InteropJson.JsonValue.getJsonNumber(a) {
                 case Some(s) => Functor.map(f, Ok(s))
                 case None    => Err("not a JsonNumber")
             }
         ) 
 
+    ///////////////////////////////////////////////////////////////////////////
+    // Array (List intermidiate) 
 
     def jsonArrayT(t: Transform[cx, JsonValue, a], f: (List[a]) -> b \ ef): Transform[cx, JsonArray, b] \ ef = 
         KIR.Base.transform((cx, a) -> {
@@ -273,14 +237,14 @@ mod KIR.Json {
     pub def jsonArrayAnyR(r1: Rewrite[cx, JsonValue]): Rewrite[cx, JsonArray] = 
         KIR.Base.transform((cx, a) -> {
             let xs = InteropJson.JsonArray.toList(a);
-            let ys: Answer[List[JsonValue]] = KIR.Base.applyT(KIR.Congruence.anyRTraversable(r1), cx, xs);
+            let ys: Answer[List[JsonValue]] = KIR.Base.applyT(KIR.Congruence.anyR_Traversable(r1), cx, xs);
             Functor.map(InteropJson.JsonArray.fromList, ys)
-        }) 
+        })
 
     pub def jsonArrayOneR(r1: Rewrite[cx, JsonValue]): Rewrite[cx, JsonArray] =
         transform((cx, a) -> 
             let xs = InteropJson.JsonArray.toList(a);
-            let ys: Answer[List[JsonValue]] = KIR.Base.applyT(KIR.Congruence.oneRTraversable(r1), cx, xs);
+            let ys: Answer[List[JsonValue]] = KIR.Base.applyT(KIR.Congruence.oneR_Traversable(r1), cx, xs);
             Functor.map(InteropJson.JsonArray.fromList, ys)
         )
 
@@ -288,19 +252,20 @@ mod KIR.Json {
     pub def jsonArrayAllT(t1: Transform[cx, JsonValue, b]): Transform[cx, JsonArray, b] with Monoid[b] =
         KIR.Base.transform((cx, a) -> 
             let xs = InteropJson.JsonArray.toList(a);
-            KIR.Base.applyT(KIR.Congruence.allTFoldable(t1), cx, xs)
+            KIR.Base.applyT(KIR.Congruence.allT_Foldable(t1), cx, xs)
         )
 
     pub def jsonArrayOneT(t1: Transform[cx, JsonValue, b]): Transform[cx, JsonArray, b] =
         KIR.Base.transform((cx, a) -> 
             let xs = InteropJson.JsonArray.toList(a);
-            KIR.Base.applyT(KIR.Congruence.oneTFoldable(t1), cx, xs)
+            KIR.Base.applyT(KIR.Congruence.oneT_Foldable(t1), cx, xs)
         )
 
+    ///////////////////////////////////////////////////////////////////////////
+    // Object (map) 
 
     pub def jsonObjectT(t: Transform[cx, JsonObjectRow, a], f: List[a] -> b  \ ef): Transform[cx, JsonObject, b] \ ef =
         KIR.Base.transform((cx, a) -> {
-            // TODO - get this down to one traversal...
             let xs = InteropJson.JsonObject.toList(a) |> List.map(match (x, y) -> JsonObjectRow.JsonObjectRow(x, y));
             let ys: Answer[List[a]] = Traversable.traverse(x1 -> KIR.Base.applyT(t, cx, x1), xs);
             Result.map(f, ys)
@@ -308,7 +273,8 @@ mod KIR.Json {
 
     // TODO - too many traversals! ...
     pub def jsonObjectAllR(t: Rewrite[cx, JsonObjectRow]): Rewrite[cx, JsonObject] =
-        jsonObjectT(t, List.map(match (JsonObjectRow.JsonObjectRow(k, v)) -> (k, v)) >>  List.toMap >> InteropJson.JsonObject.fromMap)
+        jsonObjectT(t, 
+            List.map(match (JsonObjectRow.JsonObjectRow(k, v)) -> (k, v)) >>  List.toMap >> InteropJson.JsonObject.fromMap)
 
     pub def jsonObjectAnyR(t: Rewrite[cx, JsonObjectRow]): Rewrite[cx, JsonObject] = 
         ???
@@ -323,7 +289,7 @@ mod KIR.Json {
                 applyT(t1, cx1, JsonObjectRow.JsonObjectRow(k, v))
             });
             let xs = InteropJson.JsonObject.toList(a);
-            applyT(KIR.Congruence.allTFoldable(t1kv), cx, xs)
+            applyT(KIR.Congruence.allT_Foldable(t1kv), cx, xs)
         })
 
     pub def jsonObjectOneT(t1: Transform[cx, JsonObjectRow, b]): Transform[cx, JsonObject, b] =
@@ -333,7 +299,7 @@ mod KIR.Json {
                 applyT(t1, cx1, JsonObjectRow.JsonObjectRow(k, v))
             });
             let xs = InteropJson.JsonObject.toList(a);
-            applyT(KIR.Congruence.oneTFoldable(t1kv), cx, xs)
+            applyT(KIR.Congruence.oneT_Foldable(t1kv), cx, xs)
         })
 
 
