@@ -76,12 +76,22 @@ mod KIR.Json {
         case JsonObjectRow(String, JsonValue)
     }
 
-    // def jsonObjectRowWrapper(): Wrapper[JsonObjectRow, (String, JsonValue)] = 
-    //     def wrapF(kv) = match kv { case (k, v) => JsonObjectRow.JsonObjectRow(k, v) };
-    //     def unwrapF(w) = { let JsonObjectRow.JsonObjectRow(k, v) = w; (k, v) };
-    //     { wrap = wrapF, unwrap = unwrapF}
+    def promoteJsonObjectRowR(r1: Rewrite[cx, JsonValue]): Rewrite[cx, JsonObjectRow] = 
+        rewrite((cx1, kv) -> { 
+            let JsonObjectRow.JsonObjectRow(k1, v1) = kv; 
+            let kids: Answer[JsonValue] = applyR(r1, cx1, v1);
+            Functor.map(JsonObjectRow.JsonObjectRow(k1), kids)
+        })
 
+    // def promoteJsonObjectRowT(r1: Rewrite[cx, JsonValue]): Rewrite[cx, JsonObjectRow] = 
+    //     rewrite((cx1, kv) -> { 
+    //         let JsonObjectRow.JsonObjectRow(k1, v1) = kv; 
+    //         let kids: Answer[JsonValue] = applyR(r1, cx1, v1);
+    //         Functor.map(JsonObjectRow.JsonObjectRow(k1), kids)
+    //     })
 
+    // Note - as currently written this provides no access to an objects field name
+    // which makes it somewhat useless
     pub def jsonAllR(r1: Rewrite[cx, JsonValue]): Rewrite[cx, JsonValue] = 
         rewrite((cx, v) -> 
             match InteropJson.JsonValue.ValueView.viewJsonValue(v) {
@@ -90,11 +100,7 @@ mod KIR.Json {
                     Functor.map(InteropJson.JsonArray.toJsonValue, ma)
                 }
                 case JsonValueView.JsObject(obj)    => { 
-                    let r1kv = rewrite((cx1, kv) -> { 
-                        let JsonObjectRow.JsonObjectRow(k1, v1) = kv; 
-                        let kids: Answer[JsonValue] = applyR(r1, cx1, v1);
-                        Functor.map(JsonObjectRow.JsonObjectRow(k1), kids)
-                    });
+                    let r1kv = promoteJsonObjectRowR(r1);
                     let ma: Answer[JsonObject] = applyR(jsonObjectAllR(r1kv), cx, obj); 
                     Functor.map(InteropJson.JsonObject.toJsonValue, ma)
                 }
@@ -110,11 +116,7 @@ mod KIR.Json {
                     Functor.map(InteropJson.JsonArray.toJsonValue, ma)
                 }
                 case JsonValueView.JsObject(obj)    => {
-                    let r1kv = rewrite((cx1, kv) -> { 
-                        let JsonObjectRow.JsonObjectRow(k1, v1) = kv; 
-                        let kids: Answer[JsonValue] = applyR(r1, cx1, v1);
-                        Functor.map(JsonObjectRow.JsonObjectRow(k1), kids)
-                    });
+                    let r1kv = promoteJsonObjectRowR(r1);
                     let ma: Answer[JsonObject] = applyR(jsonObjectAnyR(r1kv), cx, obj); 
                     Functor.map(InteropJson.JsonObject.toJsonValue, ma)
                 }
@@ -131,11 +133,7 @@ mod KIR.Json {
                     Functor.map(InteropJson.JsonArray.toJsonValue, ma)
                 }
                 case JsonValueView.JsObject(obj)    => {
-                    let r1kv = rewrite((cx1, kv) -> { 
-                        let JsonObjectRow.JsonObjectRow(k1, v1) = kv; 
-                        let kids: Answer[JsonValue] = applyR(r1, cx1, v1);
-                        Functor.map(JsonObjectRow.JsonObjectRow(k1), kids)
-                    });
+                    let r1kv = promoteJsonObjectRowR(r1);
                     let ma: Answer[JsonObject] = applyR(jsonObjectOneR(r1kv), cx, obj); 
                     Functor.map(InteropJson.JsonObject.toJsonValue, ma)
                 }
@@ -278,7 +276,7 @@ mod KIR.Json {
             Result.map(f, ys)
         }) 
 
-    // TODO - too many traversals! ...
+
     pub def jsonObjectAllR(t: Rewrite[cx, JsonObjectRow]): Rewrite[cx, JsonObject] =
         jsonObjectT(t, 
             List.map(match (JsonObjectRow.JsonObjectRow(k, v)) -> (k, v)) >>  List.toMap >> InteropJson.JsonObject.fromMap)

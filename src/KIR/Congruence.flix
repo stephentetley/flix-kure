@@ -417,6 +417,7 @@ mod KIR.Congruence {
             }
         )
 
+    ///////////////////////////////////////////////////////////////////////////
     // List (Traversable)
 
     pub def allR_Traversable(r1: Rewrite[cx, kid]): Rewrite[cx, t[kid]] \ Foldable.Aef[t] with Traversable[t] = 
@@ -489,6 +490,20 @@ mod KIR.Congruence {
     ///////////////////////////////////////////////////////////////////////////
     // Map
     
+    // Rewrite keys and values
+    pub def allR_Map(r1: Rewrite[cx, (k, v)]): Rewrite[cx, Map[k, v]] with Order[k] = 
+        rewrite((cx, mp) -> 
+            def step(accB, kv) = {
+                if (accB) {
+                    match applyR(r1, cx, kv) {
+                        case Err(_) => (accB, kv)
+                        case Ok(kv1) => (true, kv1)
+                    }
+                } else (false, kv)
+            };
+            let (acc, ys) = Map.toList(mp) |> Traversable.mapAccumLeft(step, true);
+            if (acc) Ok(List.toMap(ys)) else Err("anyRMap failed")
+        )
 
 
 
@@ -520,6 +535,16 @@ mod KIR.Congruence {
             let (acc, ys) = Map.toList(mp) |> Traversable.mapAccumLeft(step, false);
             if (acc) Ok(List.toMap(ys)) else Err("oneRMap failed")
         )
+
+    pub def oneT_Map(t1: Transform[cx, (k, v), b]): Transform[cx, Map[k, v], b] with Order[k] = 
+        transform((cx, mp) -> {
+            let ys = Map.toList(mp);
+            match List.findMap(x -> { applyT(t1, cx, x) |> Result.toOption }, ys) {
+                case Some(ans) => Ok(ans)
+                case None      => Err("oneT_Map")
+            }
+        })
+
 
 
 }
